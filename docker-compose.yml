@@ -1,0 +1,74 @@
+# docker-compose.yml
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: evently_postgres
+    environment:
+      POSTGRES_DB: evently_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"  # Changed from 5432 to 5433
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d evently_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: evently_redis
+    command: redis-server --appendonly yes --requirepass redispass
+    ports:
+      - "6380:6379"  # Changed from 6379 to 6380
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redispass", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Redis Commander (Optional - Redis GUI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: evently_redis_gui
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:redispass
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    profiles:
+      - gui
+
+  # pgAdmin (Optional - PostgreSQL GUI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: evently_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@evently.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGLADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    profiles:
+      - gui
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: evently_network

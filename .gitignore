@@ -1,0 +1,27 @@
+﻿# Dependencies
+node_modules/
+npm-debug.log*
+
+# Environment variables
+.env
+
+# Build output
+dist/
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+*.pid
+
+# Coverage directory
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
