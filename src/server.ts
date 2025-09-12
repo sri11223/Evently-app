@@ -4,6 +4,7 @@ import app from './app';
 import { db } from './config/database';
 import { redis } from './config/redis';
 
+
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {

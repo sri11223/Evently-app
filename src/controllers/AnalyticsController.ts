@@ -129,7 +129,6 @@ export class AnalyticsController {
     }
 
 
-    // Add this method to AnalyticsController class
 
 public async getDatabaseStatus(req: Request, res: Response): Promise<void> {
     try {
@@ -173,6 +172,29 @@ public async getDatabaseStatus(req: Request, res: Response): Promise<void> {
         });
     }
 }
+
+
+// Add this method to AnalyticsController
+public async getRateLimitStats(req: Request, res: Response): Promise<void> {
+    try {
+        const { rateLimiter } = await import('../middleware/RateLimitMiddleware');
+        const stats = await rateLimiter.getStats();
+        
+        res.json({
+            success: true,
+            data: stats,
+            timestamp: new Date()
+        });
+        
+    } catch (error) {
+        console.error('❌ Rate limit stats error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve rate limit statistics'
+        });
+    }
+}
+
 
 }
 

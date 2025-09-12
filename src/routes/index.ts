@@ -4,6 +4,11 @@ import eventRoutes from './events';
 import bookingRoutes from './bookings';
 import analyticsRoutes from './analytics';
 import cacheRoutes from './cache';
+import loadTestRoutes from './loadtest';
+import tracingRoutes from './tracing';
+import pricingRoutes from './pricing';
+
+
 
 const router = Router();
 
@@ -12,6 +17,9 @@ router.use('/events', eventRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/cache', cacheRoutes);
+router.use('/load-test', loadTestRoutes);
+router.use('/tracing', tracingRoutes);
+router.use('/pricing', pricingRoutes);
 
 // API Info endpoint
 router.get('/', (req, res) => {
@@ -24,6 +32,9 @@ router.get('/', (req, res) => {
             bookings: '/api/v1/bookings',
             analytics: '/api/v1/analytics',
             cache: '/api/v1/cache',
+            loadtest: '/api/v1/load-test',
+            tracing: '/api/v1/tracing',
+            pricing: '/api/v1/pricing',
             health: '/health'
         },
         features: [

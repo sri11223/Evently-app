@@ -4,6 +4,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import routes from './routes';
+import { globalRateLimit } from './middleware/RateLimitMiddleware';
+import { requestTracing } from './middleware/TracingMiddleware';
 
 class EventlyApp {
     public app: Application;
@@ -35,6 +37,9 @@ class EventlyApp {
 
         // API routes
         this.app.use('/api/v1', routes);
+        this.app.use('/api', globalRateLimit);
+        this.app.use(requestTracing);
+
 
         // 404 handler
         this.app.use((req: Request, res: Response) => {

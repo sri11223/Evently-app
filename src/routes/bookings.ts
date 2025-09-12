@@ -1,11 +1,12 @@
 // src/routes/bookings.ts - COMPLETE FILE
 import { Router } from 'express';
 import { bookingController } from '../controllers/BookingController';
+import { bookingRateLimit } from '../middleware/RateLimitMiddleware';
 
 const router = Router();
 
 // POST /api/v1/bookings - Book tickets
-router.post('/', bookingController.bookTickets.bind(bookingController));
+router.post('/', bookingRateLimit, bookingController.bookTickets.bind(bookingController));
 
 // PUT /api/v1/bookings/:bookingId/cancel - Cancel booking
 router.put('/:bookingId/cancel', bookingController.cancelBooking.bind(bookingController));

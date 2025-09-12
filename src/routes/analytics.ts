@@ -13,4 +13,7 @@ router.get('/events/:eventId', analyticsController.getEventAnalytics.bind(analyt
 // Add this route
 router.get('/database-status', analyticsController.getDatabaseStatus.bind(analyticsController));
 
+
+router.get('/rate-limits', analyticsController.getRateLimitStats.bind(analyticsController));
+
 export default router;
