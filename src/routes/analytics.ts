@@ -10,4 +10,7 @@ router.get('/', analyticsController.getOverallAnalytics.bind(analyticsController
 // GET /api/v1/analytics/events/:eventId - Event-specific analytics
 router.get('/events/:eventId', analyticsController.getEventAnalytics.bind(analyticsController));
 
+// Add this route
+router.get('/database-status', analyticsController.getDatabaseStatus.bind(analyticsController));
+
 export default router;

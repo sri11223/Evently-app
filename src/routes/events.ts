@@ -4,6 +4,7 @@ import { eventController } from '../controllers/EventController';
 
 const router = Router();
 
+router.get('/popular', eventController.getPopularEvents.bind(eventController));
 // GET /api/v1/events - Get all events
 router.get('/', eventController.getAllEvents.bind(eventController));
 
@@ -18,5 +19,8 @@ router.put('/:eventId', eventController.updateEvent.bind(eventController));
 
 // DELETE /api/v1/events/:eventId - Delete/Cancel event
 router.delete('/:eventId', eventController.deleteEvent.bind(eventController));
+
+// Add this route
+
 
 export default router;

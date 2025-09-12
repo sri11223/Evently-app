@@ -2,32 +2,24 @@
 import { Request, Response } from 'express';
 import { db } from '../config/database';
 import { pool } from '../config/database';
+import { eventCache } from '../cache/EventCache';
+
 
 export class EventController {
     
     public async getAllEvents(req: Request, res: Response): Promise<void> {
         try {
-            const query = `
-                SELECT 
-                    id, name, description, venue, event_date,
-                    total_capacity, available_seats, price, status,
-                    created_at
-                FROM events 
-                WHERE status = 'active'
-                ORDER BY event_date ASC
-            `;
+            const events = await eventCache.getAllEvents();
             
-            const result = await db.query(query);
-            const events = result.rows;
-            
-            console.log(`📅 Retrieved ${events.length} events`);
+            console.log(`📅 Retrieved ${events.length} events (cached)`);
             
             res.json({
                 success: true,
                 data: events,
-                count: events.length
+                count: events.length,
+                cached: true
             });
-
+    
         } catch (error) {
             console.error('❌ Get events error:', error);
             res.status(500).json({
@@ -41,32 +33,22 @@ export class EventController {
         try {
             const { eventId } = req.params;
             
-            const query = `
-                SELECT 
-                    id, name, description, venue, event_date,
-                    total_capacity, available_seats, price, status,
-                    version, created_at
-                FROM events 
-                WHERE id = $1 AND status = 'active'
-            `;
+            const event = await eventCache.getEventById(eventId);
             
-            const result = await db.query(query, [eventId]);
-            
-            if (result.rows.length === 0) {
+            if (!event) {
                 res.status(404).json({
                     success: false,
                     error: 'Event not found'
                 });
                 return;
             }
-
-            const event = result.rows;
             
             res.json({
                 success: true,
-                data: event
+                data: event,
+                cached: true
             });
-
+    
         } catch (error) {
             console.error('❌ Get event error:', error);
             res.status(500).json({
@@ -248,6 +230,27 @@ export class EventController {
             res.status(500).json({
                 success: false,
                 error: 'Failed to delete event'
+            });
+        }
+    }
+
+    public async getPopularEvents(req: Request, res: Response): Promise<void> {
+        try {
+            const limit = parseInt(req.query.limit as string) || 5;
+            const events = await eventCache.getPopularEvents(limit);
+            
+            res.json({
+                success: true,
+                data: events,
+                count: events.length,
+                cached: true
+            });
+    
+        } catch (error) {
+            console.error('❌ Get popular events error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to retrieve popular events'
             });
         }
     }
