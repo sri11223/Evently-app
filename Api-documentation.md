@@ -1,103 +1,1070 @@
-🎟️ Evently Backend - API Quick Reference
+# 🎟️ Evently Backend - Complete API Documentation
 
-Production-grade event ticketing system with AI features, real-time notifications, and intelligent waitlists.
+## Overview
 
-Live Demo: https://your-app.railway.app/api/v1
+The Evently API is a RESTful service designed for high-performance event booking with enterprise-grade features including real-time notifications, dynamic pricing, and intelligent waitlist management.
 
-Base URL: http://localhost:3000/api/v1
+**Base URL**: `http://localhost:3000/api/v1`  
+**Live Demo**: `https://your-app.railway.app/api/v1`  
+**Content-Type**: `application/json` for all requests  
+**Authentication**: Bearer token (coming in v2.0)  
 
-🚀 Quick Start
-git clone <repo-url>
-cd evently-backend
+## 🚀 Quick Start
+
+### Setup
+```bash
+git clone <repository-url>
+cd evently-booking-system
 npm install
-docker-compose up -d    # PostgreSQL + Redis
-npm run dev             # Starts on port 3000
+docker-compose up -d    # Start PostgreSQL + Redis
+npm run dev             # Start server on port 3000
+```
 
-
-Test:
-
+### Test Connection
+```bash
 curl http://localhost:3000/health
+```
 
-📋 Complete API Reference
-🏥 System Health
-GET  /health                  # System status & performance
-GET  /cache/stats             # Cache hit rates & memory usage
-GET  /load-test/benchmarks    # Performance test results
-GET  /tracing/stats           # Request tracing analytics
+---
 
-🎉 Events Management
-GET    /events                # List all events (?status=active)
-GET    /events/:id            # Get event details
-POST   /events                # Create event (admin)
-PUT    /events/:id            # Update event (admin)
-DELETE /events/:id            # Cancel event (admin)
+## 📋 API Endpoints Overview
 
+| Category | Endpoints | Description |
+|----------|-----------|-------------|
+| [System](#-system-health) | `/health`, `/cache/stats` | System status and monitoring |
+| [Events](#-events-management) | `/events/*` | Event CRUD operations |
+| [Bookings](#-booking-system) | `/bookings/*` | Ticket booking and management |
+| [Waitlist](#-waitlist-management) | `/waitlist/*` | Queue management system |
+| [Analytics](#-analytics--reporting) | `/analytics/*` | Business intelligence |
+| [Notifications](#-notifications) | `/notifications/*` | Real-time communication |
+| [Pricing](#-dynamic-pricing) | `/pricing/*` | AI-driven pricing optimization |
+| [Cache](#-cache-management) | `/cache/*` | Cache control and monitoring |
+| [Load Testing](#-load-testing) | `/load-test/*` | Performance testing |
+| [Tracing](#-request-tracing) | `/tracing/*` | Request monitoring |
 
-Create Event Example:
+---
 
-POST /events
+## 🏥 System Health
+
+### Get System Health
+```http
+GET /health
+```
+
+**Response**:
+```json
 {
-  "name": "Tech Conference 2025",
-  "venue": "Convention Center",
-  "event_date": "2025-12-01T19:00:00Z",
-  "total_capacity": 500,
-  "price": 99.99
+  "status": "OK",
+  "service": "Evently Booking System",
+  "timestamp": "2025-09-13T12:00:00.000Z",
+  "uptime": 86400.5,
+  "database": "connected",
+  "redis": "connected",
+  "memory": {
+    "used": "145.2 MB",
+    "total": "512 MB"
+  }
 }
+```
 
-🎫 Booking System
-POST /bookings                 # Book tickets
-PUT  /bookings/:id/cancel      # Cancel booking
-GET  /bookings/user/:userId    # User booking history
-GET  /bookings/reference/:ref  # Get by reference number
+### Get API Information
+```http
+GET /api/v1/
+```
 
-
-Book Tickets Example:
-
-POST /bookings
+**Response**:
+```json
 {
-  "user_id": "user-uuid",
-  "event_id": "event-uuid",
-  "quantity": 2
+  "success": true,
+  "service": "Evently Booking API",
+  "version": "1.0.0",
+  "endpoints": {
+    "events": "/api/v1/events",
+    "bookings": "/api/v1/bookings",
+    "analytics": "/api/v1/analytics",
+    "waitlist": "/api/v1/waitlist",
+    "notifications": "/api/v1/notifications"
+  },
+  "features": [
+    "Event management (CRUD)",
+    "Concurrent booking with distributed locking",
+    "Database sharding with 4 shards",
+    "Multi-layer intelligent caching",
+    "Real-time notifications via WebSocket",
+    "AI-powered dynamic pricing"
+  ]
 }
+```
 
+---
 
-Response:
+## 🎉 Events Management
 
+### List All Events
+```http
+GET /events
+GET /events?status=active&limit=50&offset=0
+```
+
+**Query Parameters**:
+- `status` (optional): Filter by event status (`active`, `cancelled`, `completed`)
+- `limit` (optional): Number of results (default: 50, max: 100)
+- `offset` (optional): Pagination offset (default: 0)
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Tech Conference 2025",
+      "description": "Annual technology conference",
+      "venue": "Convention Center",
+      "event_date": "2025-12-01T19:00:00.000Z",
+      "total_capacity": 500,
+      "available_seats": 450,
+      "price": 99.99,
+      "status": "active",
+      "created_at": "2025-09-01T10:00:00.000Z"
+    }
+  ],
+  "count": 1,
+  "cached": true
+}
+```
+
+### Get Event by ID
+```http
+GET /events/{eventId}
+```
+
+**Parameters**:
+- `eventId` (required): UUID of the event
+
+**Response**:
+```json
 {
   "success": true,
   "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Tech Conference 2025",
+    "description": "Annual technology conference",
+    "venue": "Convention Center",
+    "event_date": "2025-12-01T19:00:00.000Z",
+    "total_capacity": 500,
+    "available_seats": 450,
+    "price": 99.99,
+    "status": "active",
+    "version": 1,
+    "created_at": "2025-09-01T10:00:00.000Z",
+    "updated_at": "2025-09-01T10:00:00.000Z"
+  },
+  "cached": true
+}
+```
+
+### Get Popular Events
+```http
+GET /events/popular?limit=10
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Tech Conference 2025",
+      "total_bookings": 250,
+      "booking_rate": 0.5,
+      "popularity_score": 8.5
+    }
+  ]
+}
+```
+
+### Create Event
+```http
+POST /events
+```
+
+**Request Body**:
+```json
+{
+  "name": "Tech Conference 2025",
+  "description": "Annual technology conference",
+  "venue": "Convention Center",
+  "event_date": "2025-12-01T19:00:00.000Z",
+  "total_capacity": 500,
+  "price": 99.99
+}
+```
+
+**Required Fields**: `name`, `venue`, `event_date`, `total_capacity`, `price`
+
+**Response** (201):
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Tech Conference 2025",
+    "venue": "Convention Center",
+    "event_date": "2025-12-01T19:00:00.000Z",
+    "total_capacity": 500,
+    "available_seats": 500,
+    "price": 99.99,
+    "status": "active"
+  },
+  "message": "Event created successfully"
+}
+```
+
+### Update Event
+```http
+PUT /events/{eventId}
+```
+
+**Request Body**:
+```json
+{
+  "name": "Updated Event Name",
+  "description": "Updated description",
+  "price": 129.99
+}
+```
+
+### Delete/Cancel Event
+```http
+DELETE /events/{eventId}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Event cancelled successfully",
+  "refunds_processed": 25,
+  "total_refund_amount": 2499.75
+}
+```
+
+---
+
+## 🎫 Booking System
+
+### Book Tickets
+```http
+POST /bookings
+```
+
+**Request Body**:
+```json
+{
+  "user_id": "user-uuid-123",
+  "event_id": "event-uuid-456",
+  "quantity": 2
+}
+```
+
+**Required Fields**: `user_id`, `event_id`, `quantity`
+
+**Response** (201):
+```json
+{
+  "success": true,
+  "data": {
+    "booking_id": "booking-uuid-789",
     "booking_reference": "EVT20250913123456",
+    "user_id": "user-uuid-123",
+    "event_id": "event-uuid-456",
+    "quantity": 2,
     "total_amount": 199.98,
-    "status": "confirmed"
+    "status": "confirmed",
+    "created_at": "2025-09-13T12:30:00.000Z"
+  },
+  "message": "Tickets booked successfully"
+}
+```
+
+**Error Response** (409 - Conflict):
+```json
+{
+  "success": false,
+  "error": "Only 1 seats available",
+  "available_seats": 1,
+  "requested_quantity": 2
+}
+```
+
+### Cancel Booking
+```http
+PUT /bookings/{bookingId}/cancel
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Booking cancelled successfully",
+  "booking_reference": "EVT20250913123456",
+  "refunded_amount": 199.98,
+  "seats_returned": 2
+}
+```
+
+### Get Booking by Reference
+```http
+GET /bookings/reference/{reference}
+```
+
+**Parameters**:
+- `reference` (required): Booking reference number (e.g., "EVT20250913123456")
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "booking-uuid-789",
+    "booking_reference": "EVT20250913123456",
+    "quantity": 2,
+    "total_amount": 199.98,
+    "status": "confirmed",
+    "event": {
+      "name": "Tech Conference 2025",
+      "venue": "Convention Center",
+      "event_date": "2025-12-01T19:00:00.000Z"
+    }
   }
 }
+```
 
-📝 Intelligent Waitlist
-POST   /waitlist/:eventId/join          # Join waitlist
-DELETE /waitlist/:eventId/user/:userId  # Leave waitlist
-GET    /waitlist/:eventId/user/:userId  # Check position
-GET    /waitlist/:eventId/stats         # Waitlist statistics
-POST   /waitlist/:eventId/process       # Process promotions (admin)
+### Get User Bookings
+```http
+GET /bookings/user/{userId}?status=confirmed&limit=20
+```
 
+**Query Parameters**:
+- `status` (optional): Filter by booking status
+- `limit` (optional): Results per page
 
-Join Waitlist Example:
-
-POST /waitlist/event-uuid/join
+**Response**:
+```json
 {
-  "user_id": "user-uuid",
-  "user_tier": "premium"
+  "success": true,
+  "data": [
+    {
+      "id": "booking-uuid-789",
+      "quantity": 2,
+      "total_amount": 199.98,
+      "status": "confirmed",
+      "booking_reference": "EVT20250913123456",
+      "created_at": "2025-09-13T12:30:00.000Z",
+      "event_name": "Tech Conference 2025",
+      "venue": "Convention Center",
+      "event_date": "2025-12-01T19:00:00.000Z"
+    }
+  ],
+  "count": 1
 }
+```
 
+---
 
-Response:
+## 📝 Waitlist Management
 
+### Join Waitlist
+```http
+POST /waitlist/{eventId}/join
+```
+
+**Request Body**:
+```json
+{
+  "user_id": "user-uuid-123",
+  "user_tier": "premium",
+  "quantity": 1
+}
+```
+
+**User Tiers**: `basic`, `premium`, `vip` (affects priority)
+
+**Response** (201):
+```json
+{
+  "success": true,
+  "data": {
+    "waitlist_id": "waitlist-uuid-456",
+    "position": 3,
+    "estimated_wait_time": 1.5,
+    "promotion_probability": 85,
+    "user_tier": "premium",
+    "priority_score": 750
+  },
+  "message": "Successfully joined waitlist"
+}
+```
+
+### Leave Waitlist
+```http
+DELETE /waitlist/{eventId}/user/{userId}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Successfully left waitlist",
+  "positions_updated": 5
+}
+```
+
+### Get Waitlist Position
+```http
+GET /waitlist/{eventId}/user/{userId}
+```
+
+**Response**:
+```json
 {
   "success": true,
   "data": {
     "position": 3,
-    "estimatedWaitTime": 1.5,
-    "promotionProbability": 85
+    "total_ahead": 2,
+    "estimated_wait_time": 1.5,
+    "promotion_probability": 85,
+    "status": "waiting",
+    "joined_at": "2025-09-13T12:00:00.000Z"
   }
+}
+```
+
+### Get Waitlist Statistics
+```http
+GET /waitlist/{eventId}/stats
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "total_waiting": 25,
+    "average_wait_time": 2.3,
+    "promotion_rate": 0.75,
+    "tiers": {
+      "vip": 5,
+      "premium": 10,
+      "basic": 10
+    }
+  }
+}
+```
+
+### Process Waitlist (Admin)
+```http
+POST /waitlist/{eventId}/process
+```
+
+**Request Body**:
+```json
+{
+  "available_seats": 5
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "processed": 5,
+  "promoted_users": [
+    {
+      "user_id": "user-1",
+      "position": 1,
+      "notification_sent": true
+    }
+  ]
+}
+```
+
+---
+
+## 📊 Analytics & Reporting
+
+### Get Overall Analytics
+```http
+GET /analytics
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "total_events": 150,
+    "total_bookings": 2500,
+    "total_revenue": 249750.00,
+    "booking_success_rate": 0.9995,
+    "average_response_time": 8.5,
+    "cache_hit_ratio": 0.85,
+    "active_users": 1250
+  }
+}
+```
+
+### Get Event Analytics
+```http
+GET /analytics/events/{eventId}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "event_id": "event-uuid-456",
+    "total_bookings": 250,
+    "revenue": 24975.00,
+    "capacity_utilization": 0.5,
+    "booking_velocity": 12.5,
+    "waitlist_size": 25,
+    "conversion_rate": 0.75,
+    "peak_booking_time": "2025-09-13T10:00:00.000Z"
+  }
+}
+```
+
+### Get Database Status
+```http
+GET /analytics/database-status
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "master": {
+      "status": "healthy",
+      "connections": 15,
+      "avg_query_time": 2.5
+    },
+    "replicas": [
+      {
+        "id": "replica-1",
+        "status": "healthy",
+        "lag": "50ms"
+      }
+    ],
+    "shards": {
+      "shard_0": { "status": "healthy", "load": 0.3 },
+      "shard_1": { "status": "healthy", "load": 0.25 }
+    }
+  }
+}
+```
+
+### Get Rate Limit Statistics
+```http
+GET /analytics/rate-limits
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "global_requests": 10000,
+    "rate_limited_requests": 25,
+    "top_clients": [
+      {"ip": "192.168.1.1", "requests": 1500},
+      {"ip": "10.0.0.1", "requests": 1200}
+    ]
+  }
+}
+```
+
+### Get Advanced Analytics Dashboard
+```http
+GET /analytics/dashboard
+```
+
+**Response**: Comprehensive dashboard data including real-time metrics, conversion funnels, and predictive analytics.
+
+---
+
+## 🔔 Notifications
+
+### Send Test Notification
+```http
+POST /notifications/send
+```
+
+**Request Body**:
+```json
+{
+  "user_id": "user-uuid-123",
+  "type": "booking_confirmation",
+  "channels": ["websocket", "email"],
+  "message": "Your booking has been confirmed!"
+}
+```
+
+### Broadcast to Event Attendees
+```http
+POST /notifications/broadcast/{eventId}
+```
+
+**Request Body**:
+```json
+{
+  "message": "Important update about your event",
+  "type": "event_update",
+  "channels": ["websocket", "email", "sms"]
+}
+```
+
+### Get User Notifications
+```http
+GET /notifications/user/{userId}?limit=20&unread_only=false
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "notification-uuid-123",
+      "type": "booking_confirmation",
+      "message": "Your booking has been confirmed!",
+      "status": "delivered",
+      "created_at": "2025-09-13T12:30:00.000Z",
+      "read": false
+    }
+  ]
+}
+```
+
+### Get Notification Statistics
+```http
+GET /notifications/stats
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "total_sent": 5000,
+    "delivery_rate": 0.995,
+    "channels": {
+      "websocket": {"sent": 4500, "delivered": 4485},
+      "email": {"sent": 500, "delivered": 495},
+      "sms": {"sent": 100, "delivered": 98}
+    }
+  }
+}
+```
+
+---
+
+## 💰 Dynamic Pricing
+
+### Get All Pricing Recommendations
+```http
+GET /pricing/recommendations
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "event_id": "event-uuid-456",
+      "current_price": 99.99,
+      "recommended_price": 119.99,
+      "confidence": 0.85,
+      "reason": "High demand, low availability",
+      "expected_revenue_increase": 0.20
+    }
+  ]
+}
+```
+
+### Get Event Pricing
+```http
+GET /pricing/event/{eventId}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "event_id": "event-uuid-456",
+    "base_price": 99.99,
+    "current_price": 119.99,
+    "dynamic_multiplier": 1.2,
+    "factors": {
+      "demand": 0.8,
+      "availability": 0.2,
+      "time_to_event": 0.6
+    },
+    "price_history": [
+      {"date": "2025-09-01", "price": 99.99},
+      {"date": "2025-09-13", "price": 119.99}
+    ]
+  }
+}
+```
+
+### Apply Dynamic Pricing
+```http
+POST /pricing/event/{eventId}/apply
+```
+
+**Request Body**:
+```json
+{
+  "use_ai_recommendation": true,
+  "manual_price": 129.99,
+  "reason": "Special promotion"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "old_price": 99.99,
+  "new_price": 129.99,
+  "expected_impact": {
+    "revenue_change": "+15%",
+    "demand_change": "-5%"
+  }
+}
+```
+
+---
+
+## 🗄️ Cache Management
+
+### Get Cache Statistics
+```http
+GET /cache/stats
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "memory_cache": {
+      "hit_ratio": 0.75,
+      "entries": 500,
+      "memory_usage": "25MB"
+    },
+    "redis_cache": {
+      "hit_ratio": 0.85,
+      "entries": 2500,
+      "memory_usage": "100MB"
+    },
+    "database_cache": {
+      "hit_ratio": 0.65,
+      "query_cache_size": "50MB"
+    }
+  }
+}
+```
+
+### Get Real-time Cache Metrics
+```http
+GET /cache/metrics
+```
+
+**Response**: Real-time streaming metrics for cache performance monitoring.
+
+### Warm Cache
+```http
+POST /cache/warm
+```
+
+**Request Body**:
+```json
+{
+  "type": "events",
+  "target": "popular_events"
+}
+```
+
+### Invalidate Cache
+```http
+POST /cache/invalidate
+```
+
+**Request Body**:
+```json
+{
+  "keys": ["events:*", "user:123:*"],
+  "pattern": true
+}
+```
+
+---
+
+## 🧪 Load Testing
+
+### Start Load Test
+```http
+POST /load-test/start
+```
+
+**Request Body**:
+```json
+{
+  "concurrent_users": 1000,
+  "duration_seconds": 300,
+  "endpoint": "/api/v1/events",
+  "ramp_up_time": 60
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "test_id": "load-test-uuid-123",
+  "status": "running",
+  "estimated_completion": "2025-09-13T12:35:00.000Z"
+}
+```
+
+### Get Load Test Status
+```http
+GET /load-test/status/{testId}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "test_id": "load-test-uuid-123",
+    "status": "completed",
+    "results": {
+      "total_requests": 150000,
+      "successful_requests": 149750,
+      "failed_requests": 250,
+      "avg_response_time": 12.5,
+      "p95_response_time": 45.2,
+      "requests_per_second": 500
+    }
+  }
+}
+```
+
+### Get Performance Benchmarks
+```http
+GET /load-test/benchmarks
+```
+
+**Response**: Historical performance data and system benchmarks.
+
+---
+
+## 🔍 Request Tracing
+
+### Get Tracing Statistics
+```http
+GET /tracing/stats
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "total_traces": 50000,
+    "avg_request_time": 15.5,
+    "slow_requests": 125,
+    "error_rate": 0.002
+  }
+}
+```
+
+### Get Recent Traces
+```http
+GET /tracing/traces?limit=100&min_duration=100
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "trace_id": "trace-uuid-123",
+      "method": "POST",
+      "path": "/api/v1/bookings",
+      "duration": 125.5,
+      "status": 201,
+      "timestamp": "2025-09-13T12:30:00.000Z"
+    }
+  ]
+}
+```
+
+### Search Traces
+```http
+GET /tracing/search?method=POST&status=500&min_duration=1000
+```
+
+### Get Specific Trace
+```http
+GET /tracing/trace/{traceId}
+```
+
+**Response**: Detailed trace information including spans, database queries, and performance breakdown.
+
+---
+
+## ❌ Error Responses
+
+### Standard Error Format
+```json
+{
+  "success": false,
+  "error": "Error message",
+  "code": "ERROR_CODE",
+  "details": {
+    "field": "Additional error details"
+  },
+  "timestamp": "2025-09-13T12:30:00.000Z"
+}
+```
+
+### Common HTTP Status Codes
+
+| Code | Description | Example |
+|------|-------------|---------|
+| 400 | Bad Request | Missing required fields |
+| 401 | Unauthorized | Invalid authentication token |
+| 403 | Forbidden | Insufficient permissions |
+| 404 | Not Found | Resource doesn't exist |
+| 409 | Conflict | Booking conflict, insufficient seats |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | System error |
+
+---
+
+## 🔒 Rate Limiting
+
+### Rate Limit Headers
+All responses include rate limiting headers:
+```
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1694606400
+X-RateLimit-Tier: premium
+```
+
+### Rate Limits by Endpoint
+
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| Global | 10,000/min | 1 minute |
+| Per IP | 1,000/min | 1 minute |
+| Bookings | 50/min | 1 minute |
+| Events | 200/min | 1 minute |
+| Analytics | 100/min | 1 minute |
+
+---
+
+## 📱 WebSocket API
+
+### Connection
+```javascript
+const socket = io('http://localhost:3000/notifications');
+```
+
+### Events
+- `booking_confirmed`: New booking confirmation
+- `waitlist_promoted`: User promoted from waitlist
+- `event_update`: Event information changed
+- `system_alert`: System-wide notifications
+
+### Example Usage
+```javascript
+socket.on('booking_confirmed', (data) => {
+  console.log('Booking confirmed:', data.booking_reference);
+});
+
+socket.emit('subscribe', { user_id: 'user-uuid-123' });
+```
+
+---
+
+## 🧪 Testing Examples
+
+### Test Booking Flow
+```bash
+# Create event
+curl -X POST http://localhost:3000/api/v1/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test Event",
+    "venue": "Test Venue",
+    "event_date": "2025-12-01T19:00:00Z",
+    "total_capacity": 100,
+    "price": 50.00
+  }'
+
+# Book tickets
+curl -X POST http://localhost:3000/api/v1/bookings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "test-user-123",
+    "event_id": "EVENT_ID_FROM_ABOVE",
+    "quantity": 2
+  }'
+
+# Check booking
+curl http://localhost:3000/api/v1/bookings/user/test-user-123
+```
+
+### Test Waitlist Flow
+```bash
+# Join waitlist (when event is full)
+curl -X POST http://localhost:3000/api/v1/waitlist/EVENT_ID/join \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "test-user-456",
+    "user_tier": "premium",
+    "quantity": 1
+  }'
+
+# Check position
+curl http://localhost:3000/api/v1/waitlist/EVENT_ID/user/test-user-456
+```
+
+---
+
+## 📞 Support & Contact
+
+- **API Issues**: [GitHub Issues](https://github.com/your-repo/issues)
+- **Performance Reports**: Include trace IDs from `/tracing/` endpoints
+- **Feature Requests**: Submit via GitHub discussions
+- **Security Issues**: Email security@yourdomain.com
+
+---
+
+**🚀 Built for scale, designed for performance, optimized for revenue**
 }
 
 🔔 Real-time Notifications
