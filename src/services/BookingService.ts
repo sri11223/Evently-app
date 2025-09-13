@@ -4,6 +4,7 @@ import { redis } from '../config/redis';
 import { BookingRequest, Event, Booking } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
+
 export class BookingService {
     private static instance: BookingService;
 

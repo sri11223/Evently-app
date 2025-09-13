@@ -1,9 +1,11 @@
 // src/routes/events.ts - COMPLETE FILE
 import { Router } from 'express';
 import { eventController } from '../controllers/EventController';
+import { apiRateLimit } from '../middleware/RateLimitMiddleware';
 
 const router = Router();
 
+router.use(apiRateLimit);
 router.get('/popular', eventController.getPopularEvents.bind(eventController));
 // GET /api/v1/events - Get all events
 router.get('/', eventController.getAllEvents.bind(eventController));
