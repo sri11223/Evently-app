@@ -1,6 +1,8 @@
 // src/routes/analytics.ts - NEW FILE
 import { Router } from 'express';
 import { analyticsController } from '../controllers/AnalyticsController';
+import { advancedAnalyticsController } from '../controllers/AdvancedAnalyticsController';
+
 
 const router = Router();
 
@@ -15,5 +17,10 @@ router.get('/database-status', analyticsController.getDatabaseStatus.bind(analyt
 
 
 router.get('/rate-limits', analyticsController.getRateLimitStats.bind(analyticsController));
+
+router.get('/dashboard', advancedAnalyticsController.getDashboard.bind(advancedAnalyticsController));
+router.get('/realtime', advancedAnalyticsController.getRealtimeMetrics.bind(advancedAnalyticsController));
+router.get('/funnel', advancedAnalyticsController.getConversionFunnel.bind(advancedAnalyticsController));
+router.get('/predictive', advancedAnalyticsController.getPredictiveAnalytics.bind(advancedAnalyticsController));
 
 export default router;

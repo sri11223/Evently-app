@@ -1,4 +1,4 @@
-// src/services/DynamicPricingService.ts
+// src/services/DynamicPricingService.ts - COMPLETE FILE WITH NOTIFICATIONS
 import { db } from '../config/database';
 import { cacheManager } from '../cache/CacheManager';
 
@@ -147,6 +147,37 @@ export class DynamicPricingService {
             await cacheManager.invalidateByTag('pricing');
 
             console.log(`💰 Dynamic pricing applied to ${result.rows[0].name}: $${recommendation.currentPrice} → $${recommendation.recommendedPrice}`);
+
+            // 🔔 NOTIFY USERS ABOUT SIGNIFICANT PRICE CHANGES
+            if (Math.abs(recommendation.priceChangePercent) >= 10) {
+                try {
+                    const { notificationService } = await import('./NotificationService');
+                    
+                    const priceDirection = recommendation.priceChangePercent > 0 ? 'increased' : 'decreased';
+                    const eventName = result.rows[0].name;
+                    
+                    // Broadcast to all users interested in this event
+                    const notificationsSent = await notificationService.broadcastToEvent(eventId, {
+                        type: 'price_change',
+                        title: `💰 Price Update: ${eventName}`,
+                        message: `The price for this event has ${priceDirection} by ${Math.abs(recommendation.priceChangePercent).toFixed(1)}% to $${recommendation.recommendedPrice}. ${priceDirection === 'decreased' ? 'Book now for the best price!' : 'Secure your spot before further increases!'}`,
+                        data: {
+                            oldPrice: recommendation.currentPrice,
+                            newPrice: recommendation.recommendedPrice,
+                            changePercent: recommendation.priceChangePercent,
+                            reasoning: recommendation.reasoning
+                        },
+                        channels: ['websocket', 'email'],
+                        priority: priceDirection === 'decreased' ? 'high' : 'medium',
+                        timestamp: new Date()
+                    });
+                    
+                    console.log(`💰 Price change notification sent to ${notificationsSent} users for event ${eventId}: ${recommendation.priceChangePercent.toFixed(1)}%`);
+                    
+                } catch (notificationError) {
+                    console.error('❌ Price change notification error:', notificationError);
+                }
+            }
 
             return {
                 success: true,
