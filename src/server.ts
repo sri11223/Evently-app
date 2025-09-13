@@ -19,31 +19,31 @@ eventReminderService.startReminderSystem();
 
 async function startServer() {
     try {
-        console.log('🚀 Starting Evently Booking System...');
+        console.log('Starting Evently Booking System...');
         
         // Test database connection
-        console.log('📊 Testing database connection...');
+        console.log('Testing database connection...');
         await db.testConnection();
         
         // Test Redis connection
-        console.log('📡 Testing Redis connection...');
+        console.log('Testing Redis connection...');
         await redis.ping();
-        console.log('✅ Redis connection successful');
+        console.log('Redis connection successful');
         
         // Start server
         const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
-    console.log(`🎉 Evently Booking System Started Successfully!`);
-    console.log(`📊 Server running on port ${PORT}`);
-    console.log(`🌐 Health check: http://localhost:${PORT}/health`);
-    console.log(`🔗 API endpoint: http://localhost:${PORT}/api/v1`);
-    console.log(`🔔 WebSocket endpoint: ws://localhost:${PORT}/notifications`);
-    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🐳 Database: PostgreSQL + Redis (Docker)`);
+    console.log(`Evently Booking System Started Successfully!`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+    console.log(`API endpoint: http://localhost:${PORT}/api/v1`);
+    console.log(`WebSocket endpoint: ws://localhost:${PORT}/notifications`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Database: PostgreSQL + Redis (Docker)`);
 });
 
     } catch (error) {
-        console.error('❌ Failed to start server:', error);
+        console.error('Failed to start server:', error);
         process.exit(1);
     }
 }
