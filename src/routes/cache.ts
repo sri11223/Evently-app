@@ -1,8 +1,12 @@
 // src/routes/cache.ts - VERIFY THIS FILE EXISTS
 import { Router } from 'express';
 import { cacheController } from '../controllers/CacheController';
+import { requireAdminAuth } from '../middleware/AuthMiddleware';
 
 const router = Router();
+
+// All cache management routes require admin authentication
+router.use(requireAdminAuth);
 
 // GET /api/v1/cache/stats - Cache statistics
 router.get('/stats', cacheController.getCacheStats.bind(cacheController));

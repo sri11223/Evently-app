@@ -2,25 +2,21 @@
 import { Router } from 'express';
 import { eventController } from '../controllers/EventController';
 import { apiRateLimit } from '../middleware/RateLimitMiddleware';
+import { authenticateOptional, authenticateRequired, requireAdmin } from '../middleware/AuthMiddleware';
 
 const router = Router();
 
 router.use(apiRateLimit);
+
+// Public routes (no authentication required)
 router.get('/popular', eventController.getPopularEvents.bind(eventController));
-// GET /api/v1/events - Get all events
-router.get('/', eventController.getAllEvents.bind(eventController));
+router.get('/', authenticateOptional, eventController.getAllEvents.bind(eventController));
+router.get('/:eventId', authenticateOptional, eventController.getEventById.bind(eventController));
 
-// GET /api/v1/events/:eventId - Get event by ID
-router.get('/:eventId', eventController.getEventById.bind(eventController));
-
-// POST /api/v1/events - Create new event
-router.post('/', eventController.createEvent.bind(eventController));
-
-// PUT /api/v1/events/:eventId - Update event
-router.put('/:eventId', eventController.updateEvent.bind(eventController));
-
-// DELETE /api/v1/events/:eventId - Delete/Cancel event
-router.delete('/:eventId', eventController.deleteEvent.bind(eventController));
+// Admin-only routes (require admin authentication)
+router.post('/', authenticateRequired, requireAdmin, eventController.createEvent.bind(eventController));
+router.put('/:eventId', authenticateRequired, requireAdmin, eventController.updateEvent.bind(eventController));
+router.delete('/:eventId', authenticateRequired, requireAdmin, eventController.deleteEvent.bind(eventController));
 
 // Add this route
 

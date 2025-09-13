@@ -9,11 +9,13 @@ import tracingRoutes from './tracing';
 import pricingRoutes from './pricing';
 import waitlistRoutes from './waitlist';
 import notificationRoutes from './notifications';
+import authRoutes from './auth';
 
 
 const router = Router();
 
 // Mount routes
+router.use('/auth', authRoutes);
 router.use('/events', eventRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/analytics', analyticsRoutes);
@@ -34,6 +36,7 @@ router.get('/', (req, res) => {
         service: 'Evently Booking API',
         version: '1.0.0',
         endpoints: {
+            auth: '/api/v1/auth',
             events: '/api/v1/events',
             bookings: '/api/v1/bookings',
             analytics: '/api/v1/analytics',
@@ -46,6 +49,7 @@ router.get('/', (req, res) => {
             health: '/health'
         },
         features: [
+            'JWT-based authentication & authorization',
             'Event management (CRUD)',
             'Concurrent booking with distributed locking',
             'Database sharding with 4 shards',

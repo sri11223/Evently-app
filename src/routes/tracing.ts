@@ -1,8 +1,12 @@
 // src/routes/tracing.ts
 import { Router } from 'express';
 import { tracingController } from '../controllers/TracingController';
+import { requireAdminAuth } from '../middleware/AuthMiddleware';
 
 const router = Router();
+
+// All tracing routes require admin authentication
+router.use(requireAdminAuth);
 
 // GET /api/v1/tracing/stats - Tracing statistics
 router.get('/stats', tracingController.getTracingStats.bind(tracingController));

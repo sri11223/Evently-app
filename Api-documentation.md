@@ -2,12 +2,44 @@
 
 ## Overview
 
-The Evently API is a RESTful service designed for high-performance event booking with enterprise-grade features including real-time notifications, dynamic pricing, and intelligent waitlist management.
+The Evently API is a RESTful service designed for high-performance event booking with enterprise-grade features including real-time notifications, dynamic pricing, intelligent waitlist management, and JWT-based authentication.
 
 **Base URL**: `http://localhost:3000/api/v1`  
 **Live Demo**: `https://your-app.railway.app/api/v1`  
 **Content-Type**: `application/json` for all requests  
-**Authentication**: Bearer token (coming in v2.0)  
+**Authentication**: JWT Bearer tokens
+
+## 🔐 Authentication
+
+The Evently API uses JWT (JSON Web Token) authentication with role-based access control.
+
+### Authentication Modes
+- **Public**: No authentication required
+- **Optional**: Authentication enhances functionality (analytics tracking)  
+- **Required**: Must be authenticated to access
+- **Admin Only**: Must be authenticated with admin role
+
+### Getting Started
+1. **Register** for a new account: `POST /auth/register`
+2. **Login** to get JWT token: `POST /auth/login`
+3. **Include token** in requests: `Authorization: Bearer <your-jwt-token>`
+
+### Sample Authentication Flow
+```bash
+# 1. Register new user
+curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","name":"John Doe","password":"password123"}'
+
+# 2. Login to get JWT token
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+# 3. Use token in protected requests
+curl -X GET http://localhost:3000/api/v1/bookings/user/123 \
+  -H "Authorization: Bearer <your-jwt-token>"
+```  
 
 ## 🚀 Quick Start
 
@@ -29,18 +61,201 @@ curl http://localhost:3000/health
 
 ## 📋 API Endpoints Overview
 
-| Category | Endpoints | Description |
-|----------|-----------|-------------|
-| [System](#-system-health) | `/health`, `/cache/stats` | System status and monitoring |
-| [Events](#-events-management) | `/events/*` | Event CRUD operations |
-| [Bookings](#-booking-system) | `/bookings/*` | Ticket booking and management |
-| [Waitlist](#-waitlist-management) | `/waitlist/*` | Queue management system |
-| [Analytics](#-analytics--reporting) | `/analytics/*` | Business intelligence |
-| [Notifications](#-notifications) | `/notifications/*` | Real-time communication |
-| [Pricing](#-dynamic-pricing) | `/pricing/*` | AI-driven pricing optimization |
-| [Cache](#-cache-management) | `/cache/*` | Cache control and monitoring |
-| [Load Testing](#-load-testing) | `/load-test/*` | Performance testing |
-| [Tracing](#-request-tracing) | `/tracing/*` | Request monitoring |
+| Category | Endpoints | Description | Auth Required |
+|----------|-----------|-------------|---------------|
+| [Authentication](#-authentication-endpoints) | `/auth/*` | User registration, login, profile management | Mixed |
+| [System](#-system-health) | `/health`, `/cache/stats` | System status and monitoring | None/Admin |
+| [Events](#-events-management) | `/events/*` | Event CRUD operations | Optional/Admin |
+| [Bookings](#-booking-system) | `/bookings/*` | Ticket booking and management | Required |
+| [Waitlist](#-waitlist-management) | `/waitlist/*` | Queue management system | Required/Admin |
+| [Analytics](#-analytics--reporting) | `/analytics/*` | Business intelligence | Admin Only |
+| [Notifications](#-notifications) | `/notifications/*` | Real-time communication | Required/Admin |
+| [Pricing](#-dynamic-pricing) | `/pricing/*` | AI-driven pricing optimization | Optional/Admin |
+| [Cache](#-cache-management) | `/cache/*` | Cache control and monitoring | Admin Only |
+| [Load Testing](#-load-testing) | `/load-test/*` | Performance testing | Admin Only |
+| [Tracing](#-request-tracing) | `/tracing/*` | Request monitoring | Admin Only |
+
+---
+
+## 🔐 Authentication Endpoints
+
+### Register User
+```http
+POST /auth/register
+```
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "name": "John Doe", 
+  "password": "password123",
+  "role": "user"  // Optional: "user" (default) or "admin"
+}
+```
+
+**Response** (201 Created):
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "success": true,
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "role": "user"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": "24h"
+  }
+}
+```
+
+### Login User
+```http
+POST /auth/login
+```
+
+**Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "success": true,
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "role": "user"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": "24h"
+  }
+}
+```
+
+### Get User Profile
+```http
+GET /auth/profile
+Authorization: Bearer <jwt-token>
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "user",
+    "isActive": true,
+    "memberSince": "2025-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### Change Password
+```http
+POST /auth/change-password
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body**:
+```json
+{
+  "currentPassword": "oldpassword123",
+  "newPassword": "newpassword456"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Password changed successfully"
+}
+```
+
+### Validate Token
+```http
+GET /auth/validate
+Authorization: Bearer <jwt-token>
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Token is valid",
+  "valid": true,
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "role": "user"
+  }
+}
+```
+
+### Logout
+```http
+POST /auth/logout
+Authorization: Bearer <jwt-token>
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "Logged out successfully",
+  "hint": "Remove the JWT token from your client storage"
+}
+```
+
+### Admin: List All Users
+```http
+GET /auth/admin/users?page=1&limit=20
+Authorization: Bearer <admin-jwt-token>
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "role": "user",
+      "isActive": true,
+      "memberSince": "2025-01-01T00:00:00.000Z",
+      "stats": {
+        "totalBookings": 5,
+        "totalSpent": 249.95
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "pages": 1
+  }
+}
+```
 
 ---
 
@@ -100,10 +315,15 @@ GET /api/v1/
 
 ## 🎉 Events Management
 
+**Authentication**: 
+- `GET` operations: Optional (public access, enhanced analytics with auth)
+- `POST/PUT/DELETE` operations: **Admin only**
+
 ### List All Events
 ```http
 GET /events
 GET /events?status=active&limit=50&offset=0
+Authorization: Bearer <jwt-token>  // Optional for analytics
 ```
 
 **Query Parameters**:
@@ -185,9 +405,10 @@ GET /events/popular?limit=10
 }
 ```
 
-### Create Event
+### Create Event (Admin Only)
 ```http
 POST /events
+Authorization: Bearer <admin-jwt-token>
 ```
 
 **Request Body**:
@@ -255,9 +476,12 @@ DELETE /events/{eventId}
 
 ## 🎫 Booking System
 
+**Authentication**: **Required** - All booking operations require user authentication
+
 ### Book Tickets
 ```http
 POST /bookings
+Authorization: Bearer <jwt-token>
 ```
 
 **Request Body**:
@@ -495,9 +719,12 @@ POST /waitlist/{eventId}/process
 
 ## 📊 Analytics & Reporting
 
+**Authentication**: **Admin Only** - All analytics endpoints require admin privileges
+
 ### Get Overall Analytics
 ```http
 GET /analytics
+Authorization: Bearer <admin-jwt-token>
 ```
 
 **Response**:
@@ -1291,15 +1518,66 @@ Technical Deep Dive: docs/technical-documentation.md
 
 ⭐ Why Evently?
 
+---
+
+## 🔐 Authentication Summary
+
+### Route Protection Overview
+
+| Route Category | Authentication Level | Description |
+|---------------|---------------------|-------------|
+| **Public** | None | Health checks, public event listing |
+| **Optional Auth** | Bearer token optional | Event viewing (enhanced with user context) |  
+| **User Required** | Bearer token required | Booking, waitlist, user notifications |
+| **Admin Only** | Admin role required | Analytics, cache management, user management |
+
+### JWT Token Format
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjMiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTY3MDAwMDAwMCwiZXhwIjoxNjcwMDg2NDAwfQ.signature
+```
+
+### Error Responses
+
+**401 Unauthorized**:
+```json
+{
+  "success": false,
+  "error": "Authentication required"
+}
+```
+
+**403 Forbidden** (Insufficient permissions):
+```json
+{
+  "success": false,
+  "error": "Admin privileges required"
+}
+```
+
+**401 Invalid Token**:
+```json
+{
+  "success": false,
+  "error": "Invalid authentication token"
+}
+```
+
+### Token Expiration
+- **Expiry**: 24 hours from issuance
+- **Refresh**: Login again to get new token  
+- **Storage**: Store securely on client (httpOnly cookies recommended)
+
+---
+
+## 🎯 Complete System Overview
+
 This system demonstrates:
 
-Principal-level engineering with enterprise architecture
-
-AI-powered business optimization beyond industry standards
-
-Production-ready implementation handling real-world scale
-
-Innovation leadership in event ticketing technology
+- **🔐 Enterprise Authentication**: JWT-based auth with role-based access control
+- **⚡ Principal-level engineering** with enterprise architecture
+- **🤖 AI-powered business optimization** beyond industry standards  
+- **🚀 Production-ready implementation** handling real-world scale
+- **💡 Innovation leadership** in event ticketing technology
 
 Perfect for: High-traffic events, enterprise clients, scalable SaaS platforms
 
