@@ -20,13 +20,12 @@ export class EventCacheService {
             'events:all',
             async () => {
                 console.log('🔄 Cache miss - fetching all events from database');
-                const result = await db.queryRead(`
+                const result = await db.query(`
                     SELECT 
-                        id, name, description, venue, event_date,
-                        total_capacity, available_seats, price, status,
+                        id, name, venue, event_date,
+                        total_capacity, available_seats, price,
                         created_at
                     FROM events 
-                    WHERE status = 'active'
                     ORDER BY event_date ASC
                 `);
                 return result.rows;
@@ -44,13 +43,13 @@ export class EventCacheService {
             `event:${eventId}`,
             async () => {
                 console.log(`🔄 Cache miss - fetching event ${eventId} from database`);
-                const result = await db.queryRead(`
+                const result = await db.query(`
                     SELECT 
-                        id, name, description, venue, event_date,
-                        total_capacity, available_seats, price, status,
-                        version, created_at, organizer_id
+                        id, name, venue, event_date,
+                        total_capacity, available_seats, price,
+                        created_at
                     FROM events 
-                    WHERE id = $1 AND status = 'active'
+                    WHERE id = $1
                 `, [eventId]);
                 
                 return result.rows.length > 0 ? result.rows[0] : null;
@@ -68,14 +67,13 @@ export class EventCacheService {
             `events:popular:${limit}`,
             async () => {
                 console.log('🔄 Cache miss - fetching popular events from database');
-                const result = await db.queryRead(`
+                const result = await db.query(`
                     SELECT 
                         e.id, e.name, e.venue, e.price, e.available_seats,
                         COUNT(b.id) as booking_count,
                         SUM(b.quantity) as total_tickets_sold
                     FROM events e
-                    LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-                    WHERE e.status = 'active'
+                    LEFT JOIN bookings b ON e.id = b.event_id
                     GROUP BY e.id, e.name, e.venue, e.price, e.available_seats
                     ORDER BY booking_count DESC, total_tickets_sold DESC
                     LIMIT $1
@@ -96,7 +94,7 @@ export class EventCacheService {
             `analytics:event:${eventId}`,
             async () => {
                 console.log(`🔄 Cache miss - fetching analytics for event ${eventId}`);
-                const result = await db.queryRead(`
+                const result = await db.query(`
                     SELECT 
                         e.name, e.venue, e.total_capacity, e.available_seats, e.price,
                         COUNT(b.id) as total_bookings,
@@ -108,7 +106,7 @@ export class EventCacheService {
                             ELSE 0 
                         END as capacity_utilization
                     FROM events e
-                    LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
+                    LEFT JOIN bookings b ON e.id = b.event_id
                     WHERE e.id = $1
                     GROUP BY e.id, e.name, e.venue, e.total_capacity, e.available_seats, e.price
                 `, [eventId]);

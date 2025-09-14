@@ -1,4 +1,4 @@
-// src/routes/index.ts - ADD ENTERPRISE ROUTES
+// src/routes/index.ts - ADD DATABASE TEST ROUTES
 import { Router } from 'express';
 import eventRoutes from './events';
 import bookingRoutes from './bookings';
@@ -11,6 +11,7 @@ import waitlistRoutes from './waitlist';
 import notificationRoutes from './notifications';
 import authRoutes from './auth';
 import enterpriseRoutes from './enterprise';
+import databaseTestRoutes from './database-test';
 
 
 const router = Router();
@@ -27,6 +28,7 @@ router.use('/pricing', pricingRoutes);
 router.use('/waitlist', waitlistRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/enterprise', enterpriseRoutes);
+router.use('/db-test', databaseTestRoutes);
 
 
 
