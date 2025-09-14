@@ -12,6 +12,7 @@ import notificationRoutes from './notifications';
 import authRoutes from './auth';
 import enterpriseRoutes from './enterprise';
 import databaseTestRoutes from './database-test';
+import databaseInitRoutes from './database-init';
 
 
 const router = Router();
@@ -29,6 +30,7 @@ router.use('/waitlist', waitlistRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/enterprise', enterpriseRoutes);
 router.use('/db-test', databaseTestRoutes);
+router.use('/database', databaseInitRoutes);
 
 
 

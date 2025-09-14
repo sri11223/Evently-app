@@ -112,7 +112,7 @@ export class WaitlistManager extends EventEmitter {
                 const { notificationService } = await import('./NotificationService');
                 
                 // Get event details for notification
-                const eventResult = await db.queryRead(`
+                const eventResult = await db.query(`
                     SELECT name, venue, event_date FROM events WHERE id = $1
                 `, [eventId]);
                 
@@ -206,7 +206,7 @@ export class WaitlistManager extends EventEmitter {
             }
 
             // Get additional data from database
-            const result = await db.queryRead(`
+            const result = await db.query(`
                 SELECT * FROM waitlists 
                 WHERE event_id = $1 AND user_id = $2 AND status = 'active'
             `, [eventId, userId]);
@@ -244,7 +244,7 @@ export class WaitlistManager extends EventEmitter {
             const totalWaiting = await redis.zcard(waitlistKey);
             
             // Get promotion statistics
-            const promotionStats = await db.queryRead(`
+            const promotionStats = await db.query(`
                 SELECT 
                     COUNT(*) as total_promotions,
                     AVG(EXTRACT(EPOCH FROM (promoted_at - joined_at))/3600) as avg_wait_hours,
@@ -297,7 +297,7 @@ export class WaitlistManager extends EventEmitter {
             const { notificationService } = await import('./NotificationService');
             
             // Get event details for notification
-            const eventResult = await db.queryRead(
+            const eventResult = await db.query(
                 'SELECT name, venue, event_date FROM events WHERE id = $1', 
                 [eventId]
             );
@@ -398,7 +398,7 @@ export class WaitlistManager extends EventEmitter {
     }
 
     private async getEventAvailability(eventId: string): Promise<any> {
-        const result = await db.queryRead(
+        const result = await db.query(
             'SELECT available_seats, total_capacity FROM events WHERE id = $1',
             [eventId]
         );
@@ -408,7 +408,7 @@ export class WaitlistManager extends EventEmitter {
     private async createWaitlistPromotion(eventId: string, userId: string): Promise<string | null> {
         try {
             // Get waitlist entry
-            const waitlistResult = await db.queryRead(`
+            const waitlistResult = await db.query(`
                 SELECT id FROM waitlists 
                 WHERE event_id = $1 AND user_id = $2 AND status = 'active'
             `, [eventId, userId]);
@@ -469,7 +469,7 @@ export class WaitlistManager extends EventEmitter {
     }
 
     private async processExpiredPromotions(): Promise<void> {
-        const expiredPromotions = await db.queryRead(`
+        const expiredPromotions = await db.query(`
             SELECT event_id, user_id, id
             FROM waitlist_promotions 
             WHERE status = 'pending' 

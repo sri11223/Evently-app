@@ -58,11 +58,15 @@ export class EventController {
         }
     }
 
-    public async createEvent(req: Request, res: Response): Promise<void> {
+    public async createEvent(req: any, res: Response): Promise<void> {
         try {
+            console.log('=== CREATE EVENT DEBUG ===');
+            console.log('Request body:', req.body);
+            
             const { name, description, venue, event_date, total_capacity, price } = req.body;
             
             if (!name || !venue || !event_date || !total_capacity || !price) {
+                console.log('Validation failed - missing fields');
                 res.status(400).json({
                     success: false,
                     error: 'name, venue, event_date, total_capacity, and price are required'
@@ -70,27 +74,31 @@ export class EventController {
                 return;
             }
             
+            // Simple query without created_by and description
             const query = `
                 INSERT INTO events (
-                    name, description, venue, event_date, 
+                    name, venue, event_date, 
                     total_capacity, available_seats, price
                 )
-                VALUES ($1, $2, $3, $4, $5, $5, $6)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *
             `;
             
+            console.log('SQL Query:', query);
+            console.log('Parameters:', [name, venue, event_date, total_capacity, total_capacity, price]);
+            
             const result = await db.query(query, [
-                name, description, venue, event_date, 
-                total_capacity, price
+                name, venue, event_date, 
+                total_capacity, total_capacity, price
             ]);
 
-            const event = result.rows;
+            const event = result.rows[0];
             
             console.log(`✅ Event created: ${event.name} (${event.id})`);
             
             res.status(201).json({
                 success: true,
-                data: event,
+                data: { event },
                 message: 'Event created successfully'
             });
 

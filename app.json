@@ -1,0 +1,45 @@
+{
+  "name": "evently-booking-system",
+  "description": "Event booking system with user authentication, event management, and booking functionality",
+  "keywords": ["node", "express", "postgresql", "redis", "events", "booking"],
+  "website": "https://github.com/sri11223/Evently-app",
+  "repository": "https://github.com/sri11223/Evently-app",
+  "logo": "https://example.com/logo.png",
+  "success_url": "/health",
+  "scripts": {
+    "postdeploy": "npm run build"
+  },
+  "env": {
+    "NODE_ENV": {
+      "description": "Node.js environment",
+      "value": "production"
+    },
+    "PORT": {
+      "description": "Port for the application",
+      "value": "3000"
+    },
+    "JWT_SECRET": {
+      "description": "JWT secret for authentication",
+      "generator": "secret"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    },
+    {
+      "plan": "heroku-redis:mini"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}

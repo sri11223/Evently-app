@@ -124,7 +124,7 @@ router.get('/performance-test', async (req, res) => {
 
         // Test 2: Read Query with Replication Routing
         const readStart = Date.now();
-        await db.queryRead('SELECT COUNT(*) as event_count FROM events', [], false);
+        await db.query('SELECT COUNT(*) as event_count FROM events', []);
         const readTime = Date.now() - readStart;
         
         testResults.tests.push({
