@@ -122,6 +122,8 @@ export class DatabaseInitController {
                 END;
                 $$ LANGUAGE plpgsql;
 
+                -- Drop trigger if it exists, then create it
+                DROP TRIGGER IF EXISTS booking_reference_trigger ON bookings;
                 CREATE TRIGGER booking_reference_trigger
                     BEFORE INSERT ON bookings
                     FOR EACH ROW
