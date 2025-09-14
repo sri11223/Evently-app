@@ -6,15 +6,15 @@
                               ┌─────────────────────────────┐
                               │           USERS              │
                               │─────────────────────────────│
-                              │ 🔑 id (UUID) PK             │
-                              │ 📧 email UNIQUE NOT NULL    │
-                              │ 👤 name VARCHAR(255)        │
-                              │ 🔐 password_hash VARCHAR    │
-                              │ 🎭 role ENUM(user,admin)    │
-                              │ ✅ is_active BOOLEAN        │
-                              │ 🔄 version INTEGER          │
-                              │ 📅 created_at TIMESTAMP     │
-                              │ 📅 updated_at TIMESTAMP     │
+                              │  id (UUID) PK             │
+                              │  email UNIQUE NOT NULL    │
+                              │  name VARCHAR(255)        │
+                              │  password_hash VARCHAR    │
+                              │ role ENUM(user,admin)    │
+                              │  is_active BOOLEAN        │
+                              │ version INTEGER          │
+                              │ created_at TIMESTAMP     │
+                              │ updated_at TIMESTAMP     │
                               └─────────┬───────────────────┘
                                         │ 1:N
                          ┌──────────────┼──────────────┐
@@ -23,17 +23,17 @@
            ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
            │      BOOKINGS       │ │      WAITLISTS      │ │   NOTIFICATIONS     │
            │─────────────────────│ │─────────────────────│ │─────────────────────│
-           │ 🔑 id (UUID) PK     │ │ 🔑 id (UUID) PK     │ │ 🔑 id (UUID) PK     │
-           │ 👤 user_id FK       │ │ 👤 user_id FK       │ │ 👤 user_id FK       │
-           │ 🎉 event_id FK      │ │ 🎉 event_id FK      │ │ 🎉 event_id FK      │
-           │ 📊 quantity INT     │ │ 📍 position INT     │ │ 📝 type ENUM        │
-           │ 💰 total_amount     │ │ ⭐ priority_score   │ │ 📄 message TEXT     │
-           │ 📋 status ENUM      │ │ 📅 joined_at        │ │ 🚀 channels JSON    │
-           │ 🏷️ booking_ref     │ │ ⏰ expires_at       │ │ 📊 status ENUM      │
-           │ 🔄 version INT      │ │ 📋 status ENUM      │ │ 📅 sent_at          │
-           │ 📅 created_at       │ │ 🔔 notify_prefs     │ │ 📅 delivered_at     │
-           │ 📅 updated_at       │ │ 📅 created_at       │ │ ❌ read BOOLEAN     │
-           └─────────┬───────────┘ │ 📅 updated_at       │ └─────────────────────┘
+           │  id (UUID) PK     │ │  id (UUID) PK     │ │  id (UUID) PK     │
+           │  user_id FK       │ │  user_id FK       │ │  user_id FK       │
+           │  event_id FK      │ │  event_id FK      │ │  event_id FK      │
+           │  quantity INT     │ │  position INT     │ │  type ENUM        │
+           │  total_amount     │ │  priority_score   │ │  message TEXT     │
+           │  status ENUM      │ │  joined_at        │ │  channels JSON    │
+           │  booking_ref     │ │  expires_at       │ │  status ENUM      │
+           │  version INT      │ │  status ENUM      │ │  sent_at          │
+           │  created_at       │ │  notify_prefs     │ │  delivered_at     │
+           │  updated_at       │ │  created_at       │ │  read BOOLEAN     │
+           └─────────┬───────────┘ │  updated_at       │ └─────────────────────┘
                      │ N:1         └─────────┬───────────┘
                      │                       │ N:1
                      │                       │
@@ -43,53 +43,53 @@
                   ┌─────────────────────────────────────────────────────────────────┐
                   │                         EVENTS                                  │
                   │─────────────────────────────────────────────────────────────────│
-                  │ 🔑 id (UUID) PK                                                 │
-                  │ 🎯 name VARCHAR(255) NOT NULL                                   │
-                  │ 📝 description TEXT                                             │
-                  │ 🏢 venue VARCHAR(255) NOT NULL                                  │
-                  │ 📅 event_date TIMESTAMP NOT NULL                               │
-                  │ 👥 total_capacity INTEGER > 0                                  │
-                  │ 💺 available_seats INTEGER >= 0                                │
-                  │ 💰 base_price DECIMAL(10,2) >= 0                               │
-                  │ 💰 current_price DECIMAL(10,2) >= 0                            │
-                  │ 📊 status ENUM(active,cancelled,completed)                      │
-                  │ 🔄 version INTEGER (optimistic locking)                        │
-                  │ 👤 created_by FK → users(id)                                   │
-                  │ 📅 created_at TIMESTAMP                                         │
-                  │ 📅 updated_at TIMESTAMP                                         │
+                  │  id (UUID) PK                                                 │
+                  │  name VARCHAR(255) NOT NULL                                   │
+                  │  description TEXT                                             │
+                  │  venue VARCHAR(255) NOT NULL                                  │
+                  │  event_date TIMESTAMP NOT NULL                               │
+                  │  total_capacity INTEGER > 0                                  │
+                  │  available_seats INTEGER >= 0                                │
+                  │  base_price DECIMAL(10,2) >= 0                               │
+                  │  current_price DECIMAL(10,2) >= 0                            │
+                  │  status ENUM(active,cancelled,completed)                      │
+                  │  version INTEGER (optimistic locking)                        │
+                  │  created_by FK → users(id)                                   │
+                  │  created_at TIMESTAMP                                         │
+                  │  updated_at TIMESTAMP                                         │
                   │                                                                 │
-                  │ ✅ CONSTRAINT: available_seats <= total_capacity                │
+                  │  CONSTRAINT: available_seats <= total_capacity                │
                   └─────────────┬───────────────┬───────────────┬───────────────────┘
                                 │ 1:N           │ 1:N           │ 1:N
                                 ▼               ▼               ▼
                   ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────────┐
                   │PRICING_HISTORY  │ │EVENT_ANALYTICS  │ │ BOOKING_ATTEMPTS    │
                   │─────────────────│ │─────────────────│ │─────────────────────│
-                  │🔑 id (UUID) PK  │ │🔑 id (UUID) PK  │ │🔑 id (UUID) PK      │
-                  │🎉 event_id FK   │ │🎉 event_id FK   │ │🎉 event_id FK       │
-                  │💰 old_price     │ │📊 metric_type   │ │👤 user_id FK        │
-                  │💰 new_price     │ │📈 metric_value  │ │🎫 quantity INT      │
-                  │📝 reason        │ │📅 recorded_at   │ │📋 result ENUM       │
-                  │👤 applied_by    │ │🔄 is_realtime   │ │❌ failure_reason    │
-                  │📅 applied_at    │ └─────────────────┘ │📅 attempted_at      │
-                  └─────────────────┘                     │🌐 ip_address        │
-                                                          │🔍 user_agent        │
+                  │ id (UUID) PK  │ │ id (UUID) PK  │ │ id (UUID) PK      │
+                  │ event_id FK   │ │ event_id FK   │ │ event_id FK       │
+                  │ old_price     │ │ metric_type   │ │ user_id FK        │
+                  │ new_price     │ │ metric_value  │ │ quantity INT      │
+                  │ reason        │ │ recorded_at   │ │ result ENUM       │
+                  │ applied_by    │ │ is_realtime   │ │ failure_reason    │
+                  │ applied_at    │ └─────────────────┘ │ attempted_at      │
+                  └─────────────────┘                     │ ip_address        │
+                                                          │ user_agent        │
                                                           └─────────────────────┘
 
                            ┌─────────────────────────────────┐
                            │      WAITLIST_PROMOTIONS        │
                            │─────────────────────────────────│
-                           │ 🔑 id (UUID) PK                 │
-                           │ 📝 waitlist_id FK               │
-                           │ 🎉 event_id FK                  │
-                           │ 👤 user_id FK                   │
-                           │ 📅 promoted_at TIMESTAMP        │
-                           │ ⏰ expires_at TIMESTAMP         │
-                           │ ⏳ window_minutes INTEGER       │
-                           │ 📋 status ENUM(pending,used,exp)│
-                           │ 🎫 booking_id FK (nullable)     │
-                           │ 📝 promotion_reason             │
-                           │ 📅 created_at TIMESTAMP         │
+                           │  id (UUID) PK                 │
+                           │  waitlist_id FK               │
+                           │  event_id FK                  │
+                           │  user_id FK                   │
+                           │  promoted_at TIMESTAMP        │
+                           │  expires_at TIMESTAMP         │
+                           │  window_minutes INTEGER       │
+                           │  status ENUM(pending,used,exp)│
+                           │  booking_id FK (nullable)     │
+                           │  promotion_reason             │
+                           │  created_at TIMESTAMP         │
                            └─────────────────────────────────┘
 ```
 

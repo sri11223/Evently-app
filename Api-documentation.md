@@ -4,10 +4,33 @@
 
 The Evently API is a RESTful service designed for high-performance event booking with enterprise-grade features including real-time notifications, dynamic pricing, intelligent waitlist management, and JWT-based authentication.
 
-**Base URL**: `http://localhost:3000/api/v1`  
-**Live Demo**: `https://your-app.railway.app/api/v1`  
+**Base URL**: `https://evently-app-7hx2.onrender.com/api/v1`  
+**Live Status**: ✅ **PRODUCTION READY**  
 **Content-Type**: `application/json` for all requests  
 **Authentication**: JWT Bearer tokens
+
+## 🚀 **QUICK START FOR VIDEO RECORDING**
+
+### **Step 1: Get Admin Token**
+```http
+POST https://evently-app-7hx2.onrender.com/api/v1/auth/login
+{
+  "email": "admin2@evently.com", 
+  "password": "admin123"
+}
+```
+**👆 Copy token from response!**
+
+### **Step 2: Get User Token**
+```http
+POST https://evently-app-7hx2.onrender.com/api/v1/auth/register
+{
+  "name": "Demo User",
+  "email": "demo@test.com",
+  "password": "demo123"
+}
+```
+**👆 Copy token from response!**
 
 ## 🔐 Authentication
 

@@ -60,6 +60,21 @@ CREATE TABLE IF NOT EXISTS waitlist (
     UNIQUE(user_id, event_id)
 );
 
+-- Waitlist promotions for tracking when users get promoted from waitlist
+CREATE TABLE IF NOT EXISTS waitlist_promotions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) NOT NULL,
+    event_id UUID REFERENCES events(id) NOT NULL,
+    waitlist_id UUID REFERENCES waitlist(id) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'expired', 'declined')),
+    promotion_expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    notified_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    responded_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    UNIQUE(user_id, event_id)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
 CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);
@@ -68,6 +83,10 @@ CREATE INDEX IF NOT EXISTS idx_bookings_event_id ON bookings(event_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 CREATE INDEX IF NOT EXISTS idx_waitlist_event_id ON waitlist(event_id);
 CREATE INDEX IF NOT EXISTS idx_waitlist_position ON waitlist(position);
+CREATE INDEX IF NOT EXISTS idx_waitlist_promotions_user_id ON waitlist_promotions(user_id);
+CREATE INDEX IF NOT EXISTS idx_waitlist_promotions_event_id ON waitlist_promotions(event_id);
+CREATE INDEX IF NOT EXISTS idx_waitlist_promotions_status ON waitlist_promotions(status);
+CREATE INDEX IF NOT EXISTS idx_waitlist_promotions_expires_at ON waitlist_promotions(promotion_expires_at);
 
 -- Function to generate booking reference
 CREATE OR REPLACE FUNCTION generate_booking_reference()
