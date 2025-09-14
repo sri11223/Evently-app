@@ -12,24 +12,10 @@ const router = Router();
 router.get('/connection', databaseTestController.testConnection.bind(databaseTestController));
 
 /**
- * @route POST /api/v1/db-test/initialize
- * @desc Initialize database with tables and sample data
- * @access Public (for demo purposes)
- */
-router.post('/initialize', databaseTestController.initializeData.bind(databaseTestController));
-
-/**
- * @route GET /api/v1/db-test/events-schema
- * @desc Describe events table structure and show sample data
+ * @route POST /api/v1/db-test/fix-users
+ * @desc Fix users table by adding missing is_active column
  * @access Public (for debugging purposes)
  */
-router.get('/events-schema', databaseTestController.describeEventsTable.bind(databaseTestController));
-
-/**
- * @route GET /api/v1/db-test/events-direct
- * @desc Query events directly without cache for debugging
- * @access Public (for debugging purposes)
- */
-router.get('/events-direct', databaseTestController.testEventQuery.bind(databaseTestController));
+router.post('/fix-users', databaseTestController.fixUsersTable.bind(databaseTestController));
 
 export default router;
