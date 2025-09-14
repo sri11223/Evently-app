@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "DOCKERFILE"
+  },
+  "deploy": {
+    "startCommand": "npm run dev",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300
+  }
+}
