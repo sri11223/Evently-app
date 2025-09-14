@@ -27,13 +27,4 @@ router.get('/status', async (req, res) => {
     await dbController.getDatabaseStatus(req, res);
 });
 
-/**
- * @route POST /api/v1/database/reset
- * @desc Reset database (drop and recreate all tables)
- * @access Public (for development)
- */
-router.post('/reset', async (req, res) => {
-    await dbController.resetDatabase(req, res);
-});
-
 export default router;
