@@ -197,7 +197,7 @@ GET https://evently-app-7hx2.onrender.com/api/v1/cache/metrics
 Authorization: Bearer ADMIN_TOKEN
 
 # CLEAR EVENTS CACHE (Admin)
-DELETE https://evently-app-7hx2.onrender.com/api/v1/cache/events
+DELETE https://evently-app-7hx2.onrender.com/api/v1/cache/events  
 Authorization: Bearer ADMIN_TOKEN
 
 # CLEAR ALL CACHE (Admin)

@@ -1,58 +1,57 @@
 # 🎟️ Evently - Event Booking System
 
-## 🏆 **PRODUCTION READY - PERFORMANCE VALIDATED** 🏆
+## 🏆 **PRODUCTION READY - ENTERPRISE GRADE SYSTEM** 🏆
 
-> **ACHIEVEMENT UNLOCKED**: Real-time testing confirms **250+ concurrent users** with **100% success rate** and **3,032 RPS peak throughput**
+### **🎯 System Performance Achievements**
+- ✅ **100% Success Rate**: Zero failures under concurrent load testing
+- ✅ **Enterprise Scalability**: Handles 15+ concurrent users with excellent response times  
+- ✅ **Cache Optimization**: Intelligent caching with performance improvements
+- ✅ **Database Excellence**: 4-shard PostgreSQL architecture with connection pooling
+- ✅ **Security**: JWT authentication with role-based access control
 
-### **🎯 Key Performance Achievements**
-- ✅ **Zero Failures**: 100% success rate across all load levels (10-250 concurrent users)
-- ✅ **Peak Performance**: 3,032 RPS achieved with sub-second response times
-- ✅ **Cache Optimization**: Hit ratio improved from 29% to 71% during testing
-- ✅ **Enterprise Scalability**: 4-shard database with master-replica replication
-- ✅ **Security**: Multi-tier rate limiting with JWT authentication
-
-📊 **[View Full Performance Report →](./PERFORMANCE_ACHIEVEMENTS.md)**
+📊 **[View Performance Report →](./PERFORMANCE_ACHIEVEMENTS.md)**
+📚 **[API Documentation →](./API_TESTING_GUIDE.md)**
+🏗️ **[Architecture Guide →](./ENTERPRISE_ARCHITECTURE.md)**
 
 ---
 
 ## Overview
 
-**Evently** is a production-grade event booking backend system designed to handle high-concurrency ticket sales with zero overselling guarantee. Built with modern technologies and enterprise-grade patterns, it can handle millions of concurrent users while maintaining data consistency and optimal performance.
+**Evently** is a production-grade event booking backend system built with enterprise architecture patterns. The system demonstrates advanced backend capabilities including concurrent user handling, intelligent caching, database optimization, and comprehensive API coverage.
 
-### 🎯 What This System Does
+### 🎯 Core Capabilities
 
-- **Event Management**: Complete CRUD operations for events with real-time capacity tracking
-- **Smart Booking System**: Distributed locking and transactions prevent overselling
-- **Intelligent Waitlist**: Priority-based queue management with automatic notifications
-- **Real-time Notifications**: WebSocket-based instant updates and multi-channel delivery
-- **Dynamic Pricing**: AI-powered pricing optimization based on demand patterns
-- **Advanced Analytics**: Comprehensive business intelligence and predictive insights
-- **Performance Monitoring**: Real-time tracing, load testing, and system health monitoring
+- **Event Management**: Full CRUD operations with real-time capacity tracking
+- **Booking System**: Secure booking with capacity management and user tracking  
+- **Admin Dashboard**: Complete analytics and system management capabilities
+- **Performance Optimization**: Multi-layer caching and database optimization
+- **Concurrency Handling**: Proven ability to handle multiple simultaneous users
+- **Enterprise Features**: Authentication, authorization, and monitoring systems
 
 ## 🏆 Key Features
 
-✅ **Zero Overselling** - Redis distributed locks + PostgreSQL transactions  
-✅ **High Concurrency** - Handle 1M+ concurrent users with 4-shard database architecture  
-✅ **Ultra-Fast Responses** - Multi-layer caching achieving 85% hit ratio (2-10ms response times)  
-✅ **Real-time Updates** - WebSocket notifications with 100% delivery guarantee  
-✅ **Revenue Optimization** - AI-driven dynamic pricing for 15-25% revenue increase  
-✅ **Enterprise Monitoring** - Complete observability with request tracing and performance analytics  
-✅ **Database Scaling** - Master-replica replication with automatic read-write separation  
-✅ **Smart Rate Limiting** - Adaptive rate limiting based on system load and user tiers  
+✅ **Concurrent User Support** - Handles multiple simultaneous requests with zero failures  
+✅ **High Performance** - Sub-400ms response times with intelligent caching  
+✅ **Database Excellence** - PostgreSQL with optimized connection pooling  
+✅ **Admin Control** - Comprehensive management and analytics dashboard  
+✅ **API Coverage** - 60+ endpoints across all system functions  
+✅ **Security** - JWT authentication with role-based access control  
+✅ **Monitoring** - Real-time performance tracking and system health  
+✅ **Production Ready** - Deployed and validated on enterprise infrastructure  
 
 ## 🛠️ Technology Stack
 
-### Backend
-- **Runtime**: Node.js 18+ with TypeScript
-- **Framework**: Express.js with modular architecture
-- **Database**: PostgreSQL 15 with sharding and replication
-- **Caching**: Redis 7 for sessions, queues, and caching
-- **Real-time**: Socket.IO for WebSocket connections
+### Backend Core
+- **Runtime**: Node.js 18+ with TypeScript for type safety
+- **Framework**: Express.js with modular REST API architecture  
+- **Database**: PostgreSQL with 4-shard horizontal scaling
+- **Caching**: Redis for intelligent performance optimization
+- **Authentication**: JWT with role-based authorization
 
 ### Infrastructure
 - **Containerization**: Docker & Docker Compose
 - **Process Management**: PM2 for production
-- **Deployment**: Railway, Heroku, or self-hosted
+- **Deployment**: Render.com with auto-deployment
 - **Monitoring**: Winston logging with request tracing
 
 ### Key Libraries
@@ -69,12 +68,19 @@
 - PostgreSQL 15+ (or use Docker)
 - Redis 7+ (or use Docker)
 
-### Installation
+## 🚀 **Quick Start Installation**
+
+### **Prerequisites**
+- Node.js 18+ 
+- Docker and Docker Compose
+- Git
+
+### **Installation Steps**
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd evently-booking-system
+git clone https://github.com/sri11223/Evently-app.git
+cd Evently-app/evently-booking-system
 ```
 
 2. **Install dependencies**
@@ -86,44 +92,91 @@ npm install
 ```bash
 # Copy environment template
 cp .env.example .env
-
-# Configure your environment variables
-# DB_HOST=localhost
-# DB_PORT=5433
-# DB_NAME=evently_db
-# DB_USER=postgres
-# DB_PASSWORD=password
-# REDIS_HOST=localhost
-# REDIS_PORT=6380
-# REDIS_PASSWORD=redispass
 ```
+**Note**: The `.env` file is already configured for Docker containers.
 
-4. **Start infrastructure (Docker)**
+4. **Start infrastructure with Docker**
 ```bash
-# Start PostgreSQL and Redis
+# Start PostgreSQL and Redis containers
 docker-compose up -d
 
-# Check services are running
+# Verify containers are running
 docker-compose ps
 ```
 
-5. **Start the application**
+5. **Initialize the database**
+```bash
+# The database will auto-initialize with the schema
+# You can verify by checking the logs
+docker-compose logs postgres
+```
+
+6. **Start the application**
 ```bash
 # Development mode with hot reload
 npm run dev
 
-# Production mode
+# Production mode (alternative)
 npm run build
 npm start
 ```
 
-6. **Verify installation**
+7. **Verify installation**
 ```bash
-# Health check
+# Test the API
 curl http://localhost:3000/health
 
-# API info
+# Or visit in browser
+http://localhost:3000/health
+```
+
+### **Alternative Setup Options**
+
+- 📋 **[Local Setup Guide](./LOCAL_SETUP_GUIDE.md)** - Options for local PostgreSQL/Redis or cloud testing
+- 🐳 **Docker Issues?** - See the Local Setup Guide for non-Docker alternatives  
+- ☁️ **No Local Setup?** - Use the live system at https://evently-app-7hx2.onrender.com
+
+### **Quick Test with Demo Script**
+```bash
+# Run comprehensive system test
+./system-demo.ps1
+
+# Or basic health checks
+curl http://localhost:3000/health
 curl http://localhost:3000/api/v1
+```
+
+## 🔧 **Troubleshooting**
+
+### **Common Setup Issues:**
+
+**🐳 Docker not running?**
+```bash
+# Option 1: Start Docker Desktop, then run:
+docker-compose up -d
+
+# Option 2: Use local setup instead
+cp .env.local .env
+# See LOCAL_SETUP_GUIDE.md for details
+```
+
+**❌ Database connection failed (ECONNREFUSED)?** 
+```bash
+# Verify Docker containers are running
+docker-compose ps
+
+# Check container logs
+docker-compose logs postgres redis
+
+# Restart if needed
+docker-compose down && docker-compose up -d
+```
+
+**🌐 No local setup available?**
+```bash
+# Use the live system for testing
+# API Base: https://evently-app-7hx2.onrender.com
+./system-demo.ps1  # Points to live system
 ```
 
 ## 📊 Performance Metrics
@@ -353,16 +406,23 @@ pm2 startup
 npm start
 ```
 
-### Railway Deployment
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
+## 🌐 Production Deployment
 
-# Login and deploy
-railway login
-railway init
-railway up
-```
+**Live Demo**: https://evently-app-7hx2.onrender.com
+
+### Render Deployment (Recommended)
+This project is optimized for Render.com deployment with the included `render.yaml` configuration.
+
+1. **Fork this repository**
+2. **Connect to Render**: Link your GitHub repository 
+3. **Auto-deploy**: Render will automatically deploy using the `render.yaml` configuration
+4. **Environment Variables**: Configure in Render dashboard
+   ```
+   NODE_ENV=production
+   DATABASE_URL=postgresql://...
+   REDIS_URL=redis://...
+   JWT_SECRET=your-production-secret
+   ```
 
 ## 🤝 Contributing
 
@@ -398,46 +458,60 @@ railway up
 Environment Variables:
 
 DATABASE_URL=postgresql://...
+## 📊 System Documentation
+
+### **Essential Documentation**
+- 📚 **[Complete API Reference](./API_TESTING_GUIDE.md)** - 60+ endpoints with testing examples
+- 🏗️ **[Enterprise Architecture](./ENTERPRISE_ARCHITECTURE.md)** - System design and patterns
+- 📈 **[Performance Report](./PERFORMANCE_ACHIEVEMENTS.md)** - Load testing and metrics
+- 🔧 **[API Endpoints Guide](./COMPLETE_ENDPOINTS_REFERENCE.md)** - Complete endpoint coverage
+
+### **Quick Start Testing**
+```bash
+# Run comprehensive system demonstration
+./system-demo.ps1
+```
+
+## 🎯 Production Deployment
+
+**Live System**: https://evently-app-7hx2.onrender.com
+
+### **Environment Setup**
+```env
+DATABASE_URL=postgresql://...
 REDIS_URL=redis://...
 JWT_SECRET=your-secret
+```
 
-📈 Business Impact
+## 📈 Technical Achievements
 
-15-25% Revenue Increase through AI-powered dynamic pricing
+✅ **Enterprise Architecture** - Microservices with TypeScript type safety  
+✅ **Database Excellence** - PostgreSQL sharding with connection optimization  
+✅ **Performance Optimization** - Intelligent caching and sub-second responses  
+✅ **Concurrency Handling** - Multiple simultaneous users with zero failures  
+✅ **Production Ready** - Deployed and validated on enterprise infrastructure  
 
-72% Waitlist Conversion captures otherwise lost sales
+## 🎯 Why This System?
 
-Zero Overselling Incidents with bulletproof concurrency control
+This project demonstrates:
 
-Enterprise-Grade Performance handles massive traffic spikes
+- **Enterprise-level backend architecture** with real-world scalability
+- **Advanced database optimization** with multi-shard PostgreSQL design
+- **Production-ready implementation** handling complex concurrent operations  
+- **Comprehensive API coverage** with 60+ endpoints across all system functions
+- **Performance excellence** with validated concurrent user handling
 
-📚 Documentation
+Perfect showcase for **backend engineering**, **system design**, and **scalable architecture** skills.
 
-📋 API Reference
- - Complete endpoint guide
+---
 
-🏗️ Architecture
- - System design overview
+## 👤 **Developer**
 
-📊 Database Schema
- - Entity relationships
+**Sri Krishna Nutalapati**
 
-🔧 Technical Deep Dive
- - Implementation details
+📧 **Email**: [srikrishnanutalapati@gmail.com](mailto:srikrishnanutalapati@gmail.com)  
+💼 **LinkedIn**: [https://www.linkedin.com/in/srikrishna-nutalapati/](https://www.linkedin.com/in/srikrishna-nutalapati/)  
+🔗 **GitHub**: [https://github.com/sri11223](https://github.com/sri11223)
 
-🎯 Why This Project?
-
-This system demonstrates:
-
-Enterprise-level architecture with real-world scalability
-
-AI-powered business optimization beyond standard CRUD apps
-
-Production-ready implementation handling complex concurrency
-
-Industry-leading performance with measurable business impact
-
-Perfect showcase for backend engineering, system design, and scalable architecture skills.
-
-Built by [Your Name] | LinkedIn
- | Portfolio
+---
+**Built with enterprise standards | Production validated | Performance optimized**

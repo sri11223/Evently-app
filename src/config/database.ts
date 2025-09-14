@@ -55,12 +55,13 @@ export class DatabaseManager {
     };
 
     constructor() {
-        // Enhanced configuration with advanced connection pooling
+        // Enhanced configuration with environment-aware SSL settings
+        const isProduction = process.env.NODE_ENV === 'production';
+        const databaseUrl = process.env.DATABASE_URL;
+        
         this.pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-            ssl: {
-                rejectUnauthorized: false
-            },
+            connectionString: databaseUrl,
+            ssl: isProduction ? { rejectUnauthorized: false } : false,
             max: 50, // Increased for enterprise scale
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 2000,
