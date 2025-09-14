@@ -28,15 +28,18 @@ export class ShardManager {
     }
 
     private initializeShardConfigs(): void {
-        // For now, all shards point to same database (will expand to multiple DBs)
+        // In Railway, we only have one database, so all shards use the same connection
+        // Use DATABASE_URL from Railway environment
+        const databaseUrl = process.env.DATABASE_URL;
+        
         for (let i = 0; i < this.SHARD_COUNT; i++) {
             this.shardConfigs.push({
                 shard_id: i,
-                host: process.env.DB_HOST || 'localhost',
-                port: parseInt(process.env.DB_PORT || '5433'),
-                database: `${process.env.DB_NAME || 'evently_db'}_shard_${i}`,
-                user: process.env.DB_USER || 'postgres',
-                password: process.env.DB_PASSWORD || 'password'
+                host: 'railway', // Will use connectionString instead
+                port: 5432,
+                database: `shard_${i}`, // Virtual shard identifier
+                user: 'postgres',
+                password: 'railway'
             });
         }
     }
@@ -45,11 +48,10 @@ export class ShardManager {
         for (const config of this.shardConfigs) {
             try {
                 const pool = new Pool({
-                    host: config.host,
-                    port: config.port,
-                    database: process.env.DB_NAME || 'evently_db', // For now, same DB
-                    user: config.user,
-                    password: config.password,
+                    connectionString: process.env.DATABASE_URL,
+                    ssl: {
+                        rejectUnauthorized: false
+                    },
                     max: 10, // Smaller pool per shard
                     idleTimeoutMillis: 30000
                 });

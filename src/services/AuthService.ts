@@ -2,7 +2,7 @@
 import bcrypt from 'bcryptjs';
 import { db } from '../config/database';
 import { AuthMiddleware } from '../middleware/AuthMiddleware';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export interface RegisterRequest {
     email: string;
@@ -90,7 +90,7 @@ export class AuthService {
             const hashedPassword = await bcrypt.hash(password, AuthService.SALT_ROUNDS);
             
             // Create user
-            const userId = uuidv4();
+            const userId = randomUUID();
             const createUserQuery = `
                 INSERT INTO users (id, email, name, password_hash, role, is_active)
                 VALUES ($1, $2, $3, $4, $5, true)

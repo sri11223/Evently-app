@@ -1,5 +1,11 @@
 ﻿// src/server.ts
-import 'dotenv/config';
+import dotenv from 'dotenv';
+
+// Only load .env files in development
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config();
+}
+
 import app from './app';
 import { db } from './config/database';
 import { redis } from './config/redis';

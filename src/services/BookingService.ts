@@ -2,7 +2,7 @@
 import { pool } from '../config/database';
 import { redis } from '../config/redis';
 import { BookingRequest, Event, Booking } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 
 export class BookingService {
@@ -78,7 +78,7 @@ public async bookTickets(request: BookingRequest): Promise<any> {
             console.log(`📉 Seats updated: ${event.available_seats} → ${newAvailableSeats}`);
 
             // Create booking
-            const bookingId = uuidv4();
+            const bookingId = randomUUID();
             const bookingReference = this.generateBookingReference();
             const totalAmount = event.price * quantity;
 

@@ -1,4 +1,4 @@
-// src/routes/index.ts - ADD CACHE ROUTES
+// src/routes/index.ts - ADD ENTERPRISE ROUTES
 import { Router } from 'express';
 import eventRoutes from './events';
 import bookingRoutes from './bookings';
@@ -10,6 +10,7 @@ import pricingRoutes from './pricing';
 import waitlistRoutes from './waitlist';
 import notificationRoutes from './notifications';
 import authRoutes from './auth';
+import enterpriseRoutes from './enterprise';
 
 
 const router = Router();
@@ -25,6 +26,7 @@ router.use('/tracing', tracingRoutes);
 router.use('/pricing', pricingRoutes);
 router.use('/waitlist', waitlistRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/enterprise', enterpriseRoutes);
 
 
 

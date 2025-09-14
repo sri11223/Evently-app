@@ -48,31 +48,24 @@ export class ReplicationManager {
     }
 
     private initializeConfig(): void {
+        // In Railway, we only have one database URL
+        // For simplicity, master and replicas point to same DB in production
         this.config = {
             master: {
-                host: process.env.DB_HOST || 'localhost',
-                port: parseInt(process.env.DB_PORT || '5433'),
-                database: process.env.DB_NAME || 'evently_db',
-                user: process.env.DB_USER || 'postgres',
-                password: process.env.DB_PASSWORD || 'password'
+                host: 'railway',
+                port: 5432,
+                database: 'evently_db',
+                user: 'postgres',
+                password: 'railway'
             },
             replicas: [
                 {
                     id: 'replica-1',
-                    host: process.env.DB_REPLICA1_HOST || process.env.DB_HOST || 'localhost',
-                    port: parseInt(process.env.DB_REPLICA1_PORT || process.env.DB_PORT || '5433'),
-                    database: process.env.DB_REPLICA1_NAME || process.env.DB_NAME || 'evently_db',
-                    user: process.env.DB_USER || 'postgres',
-                    password: process.env.DB_PASSWORD || 'password',
-                    weight: 1
-                },
-                {
-                    id: 'replica-2',
-                    host: process.env.DB_REPLICA2_HOST || process.env.DB_HOST || 'localhost',
-                    port: parseInt(process.env.DB_REPLICA2_PORT || process.env.DB_PORT || '5433'),
-                    database: process.env.DB_REPLICA2_NAME || process.env.DB_NAME || 'evently_db',
-                    user: process.env.DB_USER || 'postgres',
-                    password: process.env.DB_PASSWORD || 'password',
+                    host: 'railway',
+                    port: 5432,
+                    database: 'evently_db',
+                    user: 'postgres',
+                    password: 'railway',
                     weight: 1
                 }
             ]
@@ -82,7 +75,10 @@ export class ReplicationManager {
     private async setupMasterConnection(): Promise<void> {
         try {
             this.masterPool = new Pool({
-                ...this.config.master,
+                connectionString: process.env.DATABASE_URL,
+                ssl: {
+                    rejectUnauthorized: false
+                },
                 max: 15, // More connections for master (writes + fallback reads)
                 idleTimeoutMillis: 30000,
                 connectionTimeoutMillis: 2000
@@ -105,11 +101,10 @@ export class ReplicationManager {
         for (const replicaConfig of this.config.replicas) {
             try {
                 const pool = new Pool({
-                    host: replicaConfig.host,
-                    port: replicaConfig.port,
-                    database: replicaConfig.database,
-                    user: replicaConfig.user,
-                    password: replicaConfig.password,
+                    connectionString: process.env.DATABASE_URL,
+                    ssl: {
+                        rejectUnauthorized: false
+                    },
                     max: 10, // Fewer connections per replica
                     idleTimeoutMillis: 30000,
                     connectionTimeoutMillis: 2000

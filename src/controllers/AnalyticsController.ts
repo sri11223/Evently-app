@@ -132,43 +132,28 @@ export class AnalyticsController {
 
 public async getDatabaseStatus(req: Request, res: Response): Promise<void> {
     try {
-        const { shardManager, replicationManager } = await import('../config/database');
+        // Simplified for production - return basic database status
+        const { db } = await import('../config/database');
         
-        // Get shard statistics
-        const shardStats = await shardManager.getShardStats();
-        
-        // Get replication status
-        const replicationStatus = replicationManager.getReplicationStatus();
-        
-        // Get health checks
-        const shardHealth = await shardManager.healthCheck();
+        // Test connection
+        const isConnected = await db.testConnection();
         
         res.json({
             success: true,
             data: {
-                sharding: {
-                    ...shardStats,
-                    shard_health: Object.fromEntries(shardHealth)
+                database: {
+                    status: isConnected ? 'healthy' : 'unhealthy',
+                    type: 'postgresql',
+                    mode: 'production_simplified'
                 },
-                replication: replicationStatus,
-                performance: {
-                    read_replica_utilization: replicationStatus.replicas.length > 0 ? 
-                        `${replicationStatus.replicas.filter((r: { status: string; }) => r.status === 'healthy').length}/${replicationStatus.replicas.length}` : 
-                        'N/A',
-                    estimated_read_write_ratio: '80/20', // Can be calculated from metrics
-                    avg_replication_lag: replicationStatus.replicas.length > 0 ? 
-                        Math.round(replicationStatus.replicas.reduce((sum: any, r: { lag_ms: any; }) => sum + r.lag_ms, 0) / replicationStatus.replicas.length) + 'ms' :
-                        'N/A'
-                }
-            },
-            timestamp: new Date()
+                timestamp: new Date().toISOString()
+            }
         });
-        
     } catch (error) {
-        console.error('❌ Database status error:', error);
+        console.error('Database status error:', error);
         res.status(500).json({
             success: false,
-            error: 'Failed to retrieve database status'
+            error: 'Failed to get database status'
         });
     }
 }

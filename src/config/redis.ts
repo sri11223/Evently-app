@@ -17,18 +17,29 @@ class RedisManager {
     private static instance: RedisManager;
 
     constructor() {
-        const config: RedisConfig = {
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379'),
-            password: process.env.REDIS_PASSWORD || undefined,
-            db: parseInt(process.env.REDIS_DB || '0'),
-            retryDelayOnFailover: 100,
-            enableReadyCheck: true,
-            maxRetriesPerRequest: 3,
-            lazyConnect: true,
-        };
-
-        this.client = new Redis(config);
+        // Use Railway REDIS_URL if available, otherwise fallback to individual config
+        const redisUrl = process.env.REDIS_URL;
+        
+        if (redisUrl) {
+            this.client = new Redis(redisUrl, {
+                enableReadyCheck: true,
+                maxRetriesPerRequest: 3,
+                lazyConnect: true,
+            });
+        } else {
+            // Fallback to individual config for local development
+            const config: RedisConfig = {
+                host: process.env.REDIS_HOST || 'localhost',
+                port: parseInt(process.env.REDIS_PORT || '6379'),
+                password: process.env.REDIS_PASSWORD || undefined,
+                db: parseInt(process.env.REDIS_DB || '0'),
+                retryDelayOnFailover: 100,
+                enableReadyCheck: true,
+                maxRetriesPerRequest: 3,
+                lazyConnect: true,
+            };
+            this.client = new Redis(config);
+        }
 
         this.client.on('connect', () => {
             console.log('✅ Redis connection established');
