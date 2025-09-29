@@ -1,7 +1,7 @@
 # EVENT MANAGEMENT ENDPOINTS TEST
 Write-Host "=== EVENT MANAGEMENT ENDPOINTS TEST ===" -ForegroundColor Green
 
-$baseUrl = "http://localhost:3000"
+$baseUrl = "https://evently-app-7hx2.onrender.com"
 $adminEmail = "eventadmin$(Get-Random)@example.com"
 
 # Step 1: Register Admin User
@@ -25,8 +25,8 @@ $adminHeaders = @{
 Write-Host "`n2. Testing LIST EVENTS..." -ForegroundColor Yellow
 try {
     $events = Invoke-RestMethod -Uri "$baseUrl/api/v1/events" -Method GET
-    Write-Host "✅ LIST EVENTS: Found $($events.data.Count) events" -ForegroundColor Green
-    if ($events.data.Count -gt 0) {
+    Write-Host "✅ LIST EVENTS: Found $($events.count) events" -ForegroundColor Green
+    if ($events.count -gt 0) {
         Write-Host "   Sample event: $($events.data[0].name) at $($events.data[0].venue)" -ForegroundColor Gray
     }
 } catch {
@@ -37,7 +37,7 @@ try {
 Write-Host "`n3. Testing POPULAR EVENTS..." -ForegroundColor Yellow
 try {
     $popularEvents = Invoke-RestMethod -Uri "$baseUrl/api/v1/events/popular" -Method GET
-    Write-Host "✅ POPULAR EVENTS: Found $($popularEvents.data.Count) popular events" -ForegroundColor Green
+    Write-Host "✅ POPULAR EVENTS: Found $($popularEvents.count) popular events" -ForegroundColor Green
 } catch {
     Write-Host "❌ POPULAR EVENTS Failed: $($_.Exception.Message)" -ForegroundColor Red
 }
@@ -56,10 +56,10 @@ try {
 
     Write-Host "   Creating event with data: $eventData" -ForegroundColor Gray
     $newEvent = Invoke-RestMethod -Uri "$baseUrl/api/v1/events" -Method POST -Body $eventData -Headers $adminHeaders
-    $eventId = $newEvent.data.id
+    $eventId = $newEvent.data.event.id
     Write-Host "✅ CREATE EVENT: Success!" -ForegroundColor Green
     Write-Host "   Event ID: $eventId" -ForegroundColor Gray
-    Write-Host "   Event Name: $($newEvent.data.name)" -ForegroundColor Gray
+    Write-Host "   Event Name: $($newEvent.data.event.name)" -ForegroundColor Gray
 } catch {
     Write-Host "❌ CREATE EVENT Failed: $($_.Exception.Message)" -ForegroundColor Red
     
@@ -75,7 +75,7 @@ try {
         } | ConvertTo-Json
 
         $newEvent = Invoke-RestMethod -Uri "$baseUrl/api/v1/events" -Method POST -Body $alternativeEventData -Headers $adminHeaders
-        $eventId = $newEvent.data.id
+        $eventId = $newEvent.data.event.id
         Write-Host "✅ CREATE EVENT (Alternative): Success!" -ForegroundColor Green
         Write-Host "   Event ID: $eventId" -ForegroundColor Gray
     } catch {
@@ -98,7 +98,7 @@ if ($eventId) {
     Write-Host "`n5. Testing GET SPECIFIC EVENT (using existing event)..." -ForegroundColor Yellow
     try {
         $events = Invoke-RestMethod -Uri "$baseUrl/api/v1/events" -Method GET
-        if ($events.data.Count -gt 0) {
+        if ($events.count -gt 0) {
             $existingEventId = $events.data[0].id
             $specificEvent = Invoke-RestMethod -Uri "$baseUrl/api/v1/events/$existingEventId" -Method GET
             Write-Host "✅ GET SPECIFIC EVENT: Success!" -ForegroundColor Green
@@ -121,7 +121,7 @@ if ($eventId) {
 
         $updatedEvent = Invoke-RestMethod -Uri "$baseUrl/api/v1/events/$eventId" -Method PUT -Body $updateData -Headers $adminHeaders
         Write-Host "✅ UPDATE EVENT: Success!" -ForegroundColor Green
-        Write-Host "   Updated name: $($updatedEvent.data.name)" -ForegroundColor Gray
+        Write-Host "   Updated name: $($updatedEvent.data[0].name)" -ForegroundColor Gray
     } catch {
         Write-Host "❌ UPDATE EVENT Failed: $($_.Exception.Message)" -ForegroundColor Red
     }
