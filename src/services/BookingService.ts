@@ -3,6 +3,7 @@ import { pool } from '../config/database';
 import { redis } from '../config/redis';
 import { BookingRequest, Event, Booking } from '../types';
 import { randomUUID } from 'crypto';
+import { eventCache } from '../cache/EventCache';
 
 
 export class BookingService {
@@ -98,6 +99,10 @@ public async bookTickets(request: BookingRequest): Promise<any> {
 
             await client.query('COMMIT');
             console.log('✅ Transaction committed');
+
+            // Invalidate event cache after booking
+            await eventCache.invalidateEvent(event_id);
+            console.log('🗑️ Event cache invalidated');
 
             const booking = bookingResult.rows[0];
 

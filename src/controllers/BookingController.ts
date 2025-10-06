@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { bookingService } from '../services/BookingService';
 import { db } from '../config/database';
 import { pool } from '../config/database';
+import { eventCache } from '../cache/EventCache';
 
 export class BookingController {
 
@@ -80,6 +81,9 @@ export class BookingController {
                 `, [booking.quantity, booking.event_id]);
                 
                 await client.query('COMMIT');
+                
+                // Invalidate event cache after cancelling booking
+                await eventCache.invalidateEvent(booking.event_id);
                 
                 console.log(`✅ Booking cancelled: ${bookingId}, ${booking.quantity} seats returned`);
                 
