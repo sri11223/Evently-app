@@ -11,10 +11,30 @@ export class BookingController {
         try {
             const { user_id, event_id, quantity } = req.body;
 
-            if (!user_id || !event_id || !quantity || quantity <= 0) {
+            // Validation: Required fields
+            if (!user_id || !event_id || !quantity) {
                 res.status(400).json({
                     success: false,
-                    error: 'user_id, event_id, and quantity (> 0) are required'
+                    error: 'user_id, event_id, and quantity are required'
+                });
+                return;
+            }
+
+            // Validation: Positive quantity
+            const qty = parseInt(quantity);
+            if (isNaN(qty) || qty <= 0) {
+                res.status(400).json({
+                    success: false,
+                    error: 'Quantity must be a positive number'
+                });
+                return;
+            }
+
+            // Validation: Maximum booking limit per transaction
+            if (qty > 10) {
+                res.status(400).json({
+                    success: false,
+                    error: 'Maximum 10 tickets per booking'
                 });
                 return;
             }
@@ -22,7 +42,7 @@ export class BookingController {
             const result = await bookingService.bookTickets({
                 user_id,
                 event_id,
-                quantity: parseInt(quantity)
+                quantity: qty
             });
 
             res.status(201).json(result);
@@ -47,7 +67,7 @@ export class BookingController {
                 
                 // Get booking details
                 const bookingQuery = `
-                    SELECT b.*, e.name as event_name 
+                    SELECT b.*, e.name as event_name, e.event_date 
                     FROM bookings b 
                     JOIN events e ON b.event_id = e.id 
                     WHERE b.id = $1 AND b.status = 'confirmed'
@@ -57,14 +77,29 @@ export class BookingController {
                 const bookingResult = await client.query(bookingQuery, [bookingId]);
                 
                 if (bookingResult.rows.length === 0) {
+                    await client.query('ROLLBACK');
                     res.status(404).json({
                         success: false,
                         error: 'Booking not found or already cancelled'
                     });
+                    client.release();
                     return;
                 }
                 
                 const booking = bookingResult.rows[0];
+                
+                // Check if event has already passed
+                const eventDate = new Date(booking.event_date);
+                const now = new Date();
+                if (eventDate < now) {
+                    await client.query('ROLLBACK');
+                    res.status(400).json({
+                        success: false,
+                        error: `Cannot cancel booking for past event "${booking.event_name}"`
+                    });
+                    client.release();
+                    return;
+                }
                 
                 // Update booking status
                 await client.query(`

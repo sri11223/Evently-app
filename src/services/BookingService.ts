@@ -19,15 +19,17 @@ export class BookingService {
    // src/services/BookingService.ts - Fix the event handling part
 public async bookTickets(request: BookingRequest): Promise<any> {
     const { user_id, event_id, quantity } = request;
-    const lockKey = `booking_lock:${event_id}`;
-    const lockValue = `${user_id}:${Date.now()}`;
+    
+    // Use user+event lock to prevent same user double-booking, not event-wide lock
+    const lockKey = `booking_lock:${user_id}:${event_id}`;
+    const lockValue = `${Date.now()}`;
 
     console.log(`🎫 Processing booking: User ${user_id}, Event ${event_id}, Quantity ${quantity}`);
 
-    // Step 1: Acquire Redis lock
+    // Step 1: Acquire Redis lock (per user+event to prevent double-booking by same user)
     const lockAcquired = await redis.set(lockKey, lockValue, 'PX', 30000, 'NX');
     if (lockAcquired !== 'OK') {
-        throw new Error('Event is being booked by another user. Please try again.');
+        throw new Error('You have a booking in progress for this event. Please wait or refresh.');
     }
 
     try {
@@ -38,9 +40,15 @@ public async bookTickets(request: BookingRequest): Promise<any> {
             await client.query('BEGIN');
             console.log('🔒 Transaction started');
 
+            // Validate user exists
+            const userCheck = await client.query('SELECT id FROM users WHERE id = $1', [user_id]);
+            if (userCheck.rows.length === 0) {
+                throw new Error('User not found. Please register or login first.');
+            }
+
             // Get event with lock
             const eventQuery = `
-                SELECT id, name, total_capacity, available_seats, price, version
+                SELECT id, name, total_capacity, available_seats, price, version, event_date
                 FROM events 
                 WHERE id = $1 AND status = 'active'
                 FOR UPDATE
@@ -48,16 +56,39 @@ public async bookTickets(request: BookingRequest): Promise<any> {
             const eventResult = await client.query(eventQuery, [event_id]);
             
             if (eventResult.rows.length === 0) {
-                throw new Error('Event not found or inactive');
+                throw new Error('Event not found or has been cancelled');
             }
 
             // Fix: Access the first row of the result
             const event = eventResult.rows[0];
             console.log(`📊 Event: ${event.name}, Available: ${event.available_seats}`);
 
+            // Check if event date has passed
+            const eventDate = new Date(event.event_date);
+            const now = new Date();
+            if (eventDate < now) {
+                throw new Error(`Cannot book tickets for past event "${event.name}"`);
+            }
+
+            // Check for duplicate booking (same user, same event, confirmed status)
+            const duplicateCheck = await client.query(`
+                SELECT COUNT(*) as count 
+                FROM bookings 
+                WHERE user_id = $1 AND event_id = $2 AND status = 'confirmed'
+            `, [user_id, event_id]);
+            
+            const existingBookings = parseInt(duplicateCheck.rows[0].count);
+            if (existingBookings > 0) {
+                throw new Error(`You already have a confirmed booking for "${event.name}". Cancel existing booking to book again.`);
+            }
+
             // Check availability
+            if (event.available_seats === 0) {
+                throw new Error(`Event "${event.name}" is fully booked. Join the waitlist to get notified when seats become available.`);
+            }
+
             if (event.available_seats < quantity) {
-                throw new Error(`Only ${event.available_seats} seats available`);
+                throw new Error(`Only ${event.available_seats} seat(s) available for "${event.name}". Please reduce quantity or join waitlist.`);
             }
 
             // Update event capacity

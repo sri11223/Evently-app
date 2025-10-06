@@ -174,11 +174,72 @@ export class EventController {
             
             const { name, description, venue, event_date, total_capacity, price } = req.body;
             
+            // Validation: Required fields
             if (!name || !venue || !event_date || !total_capacity || !price) {
                 console.log('Validation failed - missing fields');
                 res.status(400).json({
                     success: false,
                     error: 'name, venue, event_date, total_capacity, and price are required'
+                });
+                return;
+            }
+
+            // Validation: Capacity must be positive
+            const capacity = parseInt(total_capacity);
+            if (isNaN(capacity) || capacity <= 0) {
+                res.status(400).json({
+                    success: false,
+                    error: 'total_capacity must be a positive number'
+                });
+                return;
+            }
+
+            // Validation: Capacity limit
+            if (capacity > 100000) {
+                res.status(400).json({
+                    success: false,
+                    error: 'total_capacity cannot exceed 100,000'
+                });
+                return;
+            }
+
+            // Validation: Price must be positive
+            const eventPrice = parseFloat(price);
+            if (isNaN(eventPrice) || eventPrice < 0) {
+                res.status(400).json({
+                    success: false,
+                    error: 'price must be a positive number or zero for free events'
+                });
+                return;
+            }
+
+            // Validation: Event date must be in the future
+            const eventDate = new Date(event_date);
+            const now = new Date();
+            if (eventDate < now) {
+                res.status(400).json({
+                    success: false,
+                    error: 'event_date must be in the future'
+                });
+                return;
+            }
+
+            // Validation: Event date cannot be more than 2 years in future
+            const twoYearsFromNow = new Date();
+            twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
+            if (eventDate > twoYearsFromNow) {
+                res.status(400).json({
+                    success: false,
+                    error: 'event_date cannot be more than 2 years in the future'
+                });
+                return;
+            }
+
+            // Validation: Name length
+            if (name.length < 3 || name.length > 200) {
+                res.status(400).json({
+                    success: false,
+                    error: 'event name must be between 3 and 200 characters'
                 });
                 return;
             }
@@ -197,16 +258,16 @@ export class EventController {
             `;
             
             console.log('SQL Query:', query);
-            console.log('Parameters:', [name, description, venue, event_date, total_capacity, total_capacity, price, created_by]);
+            console.log('Parameters:', [name, description, venue, event_date, capacity, capacity, eventPrice, created_by]);
             
             const result = await db.query(query, [
-                name, 
-                description || null,  // Allow null description
-                venue, 
+                name.trim(), 
+                description?.trim() || null,  // Allow null description
+                venue.trim(), 
                 event_date, 
-                total_capacity, 
-                total_capacity,  // available_seats = total_capacity initially
-                price,
+                capacity, 
+                capacity,  // available_seats = total_capacity initially
+                eventPrice,
                 created_by
             ]);
 
@@ -260,11 +321,52 @@ export class EventController {
                 
                 const current = currentEvent.rows[0];
                 
-                // Calculate new available seats if capacity changed
+                // Validation: If updating capacity, ensure it's not less than already booked seats
                 let newAvailableSeats = current.available_seats;
                 if (total_capacity && total_capacity !== current.total_capacity) {
                     const bookedSeats = current.total_capacity - current.available_seats;
-                    newAvailableSeats = Math.max(0, total_capacity - bookedSeats);
+                    
+                    // Check if new capacity is less than booked seats
+                    if (total_capacity < bookedSeats) {
+                        await client.query('ROLLBACK');
+                        res.status(400).json({
+                            success: false,
+                            error: `Cannot reduce capacity to ${total_capacity}. Already ${bookedSeats} seats are booked. Minimum capacity must be ${bookedSeats}.`
+                        });
+                        client.release();
+                        return;
+                    }
+                    
+                    newAvailableSeats = total_capacity - bookedSeats;
+                }
+                
+                // Validation: Price if provided
+                if (price !== undefined) {
+                    const eventPrice = parseFloat(price);
+                    if (isNaN(eventPrice) || eventPrice < 0) {
+                        await client.query('ROLLBACK');
+                        res.status(400).json({
+                            success: false,
+                            error: 'price must be a positive number or zero'
+                        });
+                        client.release();
+                        return;
+                    }
+                }
+                
+                // Validation: Event date if provided
+                if (event_date) {
+                    const eventDate = new Date(event_date);
+                    const now = new Date();
+                    if (eventDate < now) {
+                        await client.query('ROLLBACK');
+                        res.status(400).json({
+                            success: false,
+                            error: 'event_date must be in the future'
+                        });
+                        client.release();
+                        return;
+                    }
                 }
                 
                 // Update event
