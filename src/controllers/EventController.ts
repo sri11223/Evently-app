@@ -58,6 +58,114 @@ export class EventController {
         }
     }
 
+    public async searchEvents(req: Request, res: Response): Promise<void> {
+        try {
+            const { 
+                search,           // Search in name or venue
+                venue,            // Filter by venue
+                minPrice,         // Minimum price
+                maxPrice,         // Maximum price
+                hasSeats,         // Only events with available seats
+                startDate,        // Events from this date
+                endDate,          // Events until this date
+                sortBy = 'date',  // Sort by: date, price, name, capacity
+                order = 'asc'     // Order: asc or desc
+            } = req.query;
+
+            // Build dynamic SQL query
+            let query = `
+                SELECT 
+                    id, name, venue, event_date,
+                    total_capacity, available_seats, price,
+                    created_at
+                FROM events 
+                WHERE status = 'active'
+            `;
+            
+            const params: any[] = [];
+            let paramIndex = 1;
+
+            // Search filter (name or venue contains keyword)
+            if (search) {
+                query += ` AND (LOWER(name) LIKE $${paramIndex} OR LOWER(venue) LIKE $${paramIndex})`;
+                params.push(`%${String(search).toLowerCase()}%`);
+                paramIndex++;
+            }
+
+            // Venue filter
+            if (venue) {
+                query += ` AND LOWER(venue) LIKE $${paramIndex}`;
+                params.push(`%${String(venue).toLowerCase()}%`);
+                paramIndex++;
+            }
+
+            // Price range filter
+            if (minPrice) {
+                query += ` AND price >= $${paramIndex}`;
+                params.push(Number(minPrice));
+                paramIndex++;
+            }
+            if (maxPrice) {
+                query += ` AND price <= $${paramIndex}`;
+                params.push(Number(maxPrice));
+                paramIndex++;
+            }
+
+            // Available seats filter
+            if (hasSeats === 'true') {
+                query += ` AND available_seats > 0`;
+            }
+
+            // Date range filter
+            if (startDate) {
+                query += ` AND event_date >= $${paramIndex}`;
+                params.push(startDate);
+                paramIndex++;
+            }
+            if (endDate) {
+                query += ` AND event_date <= $${paramIndex}`;
+                params.push(endDate);
+                paramIndex++;
+            }
+
+            // Sorting
+            const validSortFields = ['date', 'price', 'name', 'capacity'];
+            const sortField = validSortFields.includes(String(sortBy)) ? sortBy : 'date';
+            const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
+            
+            const sortMapping: { [key: string]: string } = {
+                'date': 'event_date',
+                'price': 'price',
+                'name': 'name',
+                'capacity': 'total_capacity'
+            };
+            
+            query += ` ORDER BY ${sortMapping[String(sortField)]} ${sortOrder}`;
+
+            console.log('🔍 Search query:', query);
+            console.log('📋 Parameters:', params);
+
+            const result = await db.query(query, params);
+
+            res.json({
+                success: true,
+                data: result.rows,
+                count: result.rows.length,
+                filters: {
+                    search, venue, minPrice, maxPrice, hasSeats, 
+                    startDate, endDate, sortBy, order
+                }
+            });
+
+        } catch (error) {
+            console.error('❌ Search events error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to search events'
+            });
+        }
+    }
+
     public async createEvent(req: any, res: Response): Promise<void> {
         try {
             console.log('=== CREATE EVENT DEBUG ===');
@@ -232,18 +340,43 @@ export class EventController {
             const deletedBy = (req as any).user?.id || null;
             const deletedByName = (req as any).user?.name || 'Unknown';
             
-            // Soft delete event
+            // Check if event exists and is active
+            const checkEvent = await db.query(`
+                SELECT id, name, status 
+                FROM events 
+                WHERE id = $1
+            `, [eventId]);
+            
+            if (checkEvent.rows.length === 0) {
+                res.status(404).json({
+                    success: false,
+                    error: 'Event not found'
+                });
+                return;
+            }
+            
+            const existingEvent = checkEvent.rows[0];
+            
+            if (existingEvent.status === 'cancelled') {
+                res.status(400).json({
+                    success: false,
+                    error: 'Event is already cancelled'
+                });
+                return;
+            }
+            
+            // Soft delete event (only if active)
             const result = await db.query(`
                 UPDATE events 
                 SET status = 'cancelled', updated_at = NOW() 
-                WHERE id = $1 
+                WHERE id = $1 AND status = 'active'
                 RETURNING name, id
             `, [eventId]);
             
             if (result.rows.length === 0) {
                 res.status(404).json({
                     success: false,
-                    error: 'Event not found'
+                    error: 'Event not found or already cancelled'
                 });
                 return;
             }

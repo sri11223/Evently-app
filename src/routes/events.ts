@@ -10,6 +10,7 @@ router.use(apiRateLimit);
 
 // Public routes (no authentication required)
 router.get('/popular', eventController.getPopularEvents.bind(eventController));
+router.get('/search', authenticateOptional, eventController.searchEvents.bind(eventController));
 router.get('/', authenticateOptional, eventController.getAllEvents.bind(eventController));
 router.get('/:eventId', authenticateOptional, eventController.getEventById.bind(eventController));
 
