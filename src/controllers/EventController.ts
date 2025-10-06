@@ -76,7 +76,7 @@ export class EventController {
             }
             
             // Get created_by from JWT token (admin user ID)
-            const created_by = req.user?.id || null;
+            const created_by = req.user?.name || null;
             
             // Include description and created_by fields
             const query = `
