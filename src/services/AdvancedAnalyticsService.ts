@@ -143,7 +143,7 @@ export class AdvancedAnalyticsService {
 
         const metrics = await Promise.all([
             // Real-time bookings
-            db.queryRead(`
+            db.query(`
                 SELECT 
                     COUNT(*) as bookings_last_hour,
                     SUM(total_amount) as revenue_last_hour,
@@ -153,14 +153,14 @@ export class AdvancedAnalyticsService {
             `, [lastHour]),
 
             // Active sessions (simulated)
-            db.queryRead(`
+            db.query(`
                 SELECT COUNT(DISTINCT user_id) as active_users_24h
                 FROM bookings 
                 WHERE created_at > $1
             `, [last24h]),
 
             // Waitlist activity
-            db.queryRead(`
+            db.query(`
                 SELECT COUNT(*) as new_waitlist_joins_last_hour
                 FROM waitlists 
                 WHERE joined_at > $1 AND status = 'active'
@@ -231,7 +231,7 @@ export class AdvancedAnalyticsService {
             'analytics:predictive',
             async () => {
                 // Simulate ML predictions (in production, use actual ML models)
-                const events = await db.queryRead(`
+                const events = await db.query(`
                     SELECT 
                         e.id, e.name, e.event_date, e.available_seats, e.total_capacity,
                         COUNT(b.id) as current_bookings,
@@ -291,7 +291,7 @@ export class AdvancedAnalyticsService {
     // Private helper methods
     private async getOverviewMetrics(): Promise<any> {
         const [current, previous] = await Promise.all([
-            db.queryRead(`
+            db.query(`
                 SELECT 
                     COUNT(DISTINCT e.id) as total_events,
                     COUNT(DISTINCT b.id) as total_bookings,
@@ -301,7 +301,7 @@ export class AdvancedAnalyticsService {
                 LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
                 WHERE e.status = 'active'
             `),
-            db.queryRead(`
+            db.query(`
                 SELECT 
                     COUNT(DISTINCT b.id) as bookings_last_week,
                     COALESCE(SUM(b.total_amount), 0) as revenue_last_week,
@@ -330,7 +330,7 @@ export class AdvancedAnalyticsService {
 
     private async getEventPerformanceMetrics(): Promise<any> {
         const [topSelling, underperforming] = await Promise.all([
-            db.queryRead(`
+            db.query(`
                 SELECT 
                     e.name, e.venue, e.total_capacity,
                     COUNT(b.id) as bookings,
@@ -346,7 +346,7 @@ export class AdvancedAnalyticsService {
                 ORDER BY tickets_sold DESC
                 LIMIT 5
             `),
-            db.queryRead(`
+            db.query(`
                 SELECT 
                     e.name, e.event_date,
                     SUM(b.quantity) as tickets_sold,
@@ -387,7 +387,7 @@ export class AdvancedAnalyticsService {
 
     private async getCustomerInsights(): Promise<any> {
         // Simplified customer segmentation
-        const segments = await db.queryRead(`
+        const segments = await db.query(`
             SELECT 
                 CASE 
                     WHEN booking_count >= 5 THEN 'VIP'
@@ -431,7 +431,7 @@ export class AdvancedAnalyticsService {
     }
 
     private async getWaitlistAnalytics(): Promise<any> {
-        const waitlistData = await db.queryRead(`
+        const waitlistData = await db.query(`
             SELECT 
                 COUNT(*) as total_waitlist_entries,
                 AVG(EXTRACT(EPOCH FROM (promoted_at - w.joined_at))/3600) as avg_wait_hours,
