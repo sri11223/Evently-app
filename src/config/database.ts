@@ -144,12 +144,17 @@ export class DatabaseManager {
             
             // Route to read replica if available and consistency not required
             if (this.replicationEnabled && !requiresConsistency) {
-                const result = await replicationManager.executeReadQuery(text, params);
-                this.updatePerformanceMetrics(startTime);
-                return result;
+                try {
+                    const result = await replicationManager.executeReadQuery(text, params);
+                    this.updatePerformanceMetrics(startTime);
+                    return result;
+                } catch (replicaError) {
+                    console.warn('⚠️ Read replica not available, falling back to primary');
+                    // Fall through to execute on primary
+                }
             }
             
-            // Execute on primary
+            // Execute on primary (fallback or when consistency required)
             const result = await this.pool.query(text, params);
             this.updatePerformanceMetrics(startTime);
             return result;

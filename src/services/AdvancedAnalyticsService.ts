@@ -159,12 +159,8 @@ export class AdvancedAnalyticsService {
                 WHERE created_at > $1
             `, [last24h]),
 
-            // Waitlist activity
-            db.query(`
-                SELECT COUNT(*) as new_waitlist_joins_last_hour
-                FROM waitlists 
-                WHERE joined_at > $1 AND status = 'active'
-            `, [lastHour]),
+            // Waitlist activity (disabled - table not created yet)
+            Promise.resolve({ rows: [{ new_waitlist_joins_last_hour: 0 }] }),
 
             // System performance
             this.getSystemPerformanceMetrics()
@@ -175,7 +171,7 @@ export class AdvancedAnalyticsService {
             bookings_last_hour: parseInt(metrics[0].rows[0].bookings_last_hour),
             revenue_last_hour: parseFloat(metrics[0].rows[0].revenue_last_hour || '0'),
             active_users_24h: parseInt(metrics[1].rows[0].active_users_24h),
-            new_waitlist_joins: parseInt(metrics[2].rows[0].new_waitlist_joins_last_hour),
+            new_waitlist_joins: metrics[2].rows[0].new_waitlist_joins_last_hour,
             system_health: metrics[3],
             trends: {
                 bookings_per_minute: Math.round(parseFloat(metrics[0].rows[0].bookings_last_hour) / 60 * 100) / 100,
@@ -235,10 +231,9 @@ export class AdvancedAnalyticsService {
                     SELECT 
                         e.id, e.name, e.event_date, e.available_seats, e.total_capacity,
                         COUNT(b.id) as current_bookings,
-                        COUNT(w.id) as waitlist_count
+                        0 as waitlist_count
                     FROM events e
                     LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-                    LEFT JOIN waitlists w ON e.id = w.event_id AND w.status = 'active'
                     WHERE e.status = 'active' AND e.event_date > NOW()
                     GROUP BY e.id, e.name, e.event_date, e.available_seats, e.total_capacity
                 `);
@@ -249,7 +244,7 @@ export class AdvancedAnalyticsService {
                     
                     // Simple prediction algorithm
                     let selloutProbability = utilizationRate * 100;
-                    if (event.waitlist_count > 0) selloutProbability += 20;
+                    // Waitlist feature disabled: if (event.waitlist_count > 0) selloutProbability += 20;
                     if (daysUntilEvent <= 7) selloutProbability += 15;
                     if (daysUntilEvent <= 1) selloutProbability += 25;
                     
@@ -337,10 +332,9 @@ export class AdvancedAnalyticsService {
                     SUM(b.quantity) as tickets_sold,
                     SUM(b.total_amount) as revenue,
                     ((e.total_capacity - e.available_seats) * 100.0 / e.total_capacity) as capacity_utilization,
-                    COUNT(w.id) as waitlist_demand
+                    0 as waitlist_demand
                 FROM events e
                 LEFT JOIN bookings b ON e.id = b.event_id AND b.status = 'confirmed'
-                LEFT JOIN waitlists w ON e.id = w.event_id AND w.status = 'active'
                 WHERE e.status = 'active'
                 GROUP BY e.id, e.name, e.venue, e.total_capacity, e.available_seats
                 ORDER BY tickets_sold DESC
@@ -431,25 +425,12 @@ export class AdvancedAnalyticsService {
     }
 
     private async getWaitlistAnalytics(): Promise<any> {
-        const waitlistData = await db.query(`
-            SELECT 
-                COUNT(*) as total_waitlist_entries,
-                AVG(EXTRACT(EPOCH FROM (promoted_at - w.joined_at))/3600) as avg_wait_hours,
-                COUNT(wp.id) as total_promotions,
-                COUNT(CASE WHEN wp.status = 'accepted' THEN 1 END) as successful_conversions
-            FROM waitlists w
-            LEFT JOIN waitlist_promotions wp ON w.id = wp.waitlist_id
-            WHERE w.joined_at > NOW() - INTERVAL '30 days'
-        `);
-
-        const data = waitlistData.rows[0];
-        const conversionRate = data.total_promotions > 0 ? 
-            (data.successful_conversions / data.total_promotions) * 100 : 0;
-
+        // Waitlist table not created yet - return stub data
         return {
-            conversion_rate: Math.round(conversionRate * 100) / 100,
-            avg_wait_time_hours: parseFloat(data.avg_wait_hours || '0'),
-            most_demanded_events: [] // Would be populated with actual data
+            conversion_rate: 0,
+            avg_wait_time_hours: 0,
+            most_demanded_events: [],
+            note: 'Waitlist feature not yet initialized'
         };
     }
 
