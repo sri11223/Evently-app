@@ -62,6 +62,7 @@ export class EventController {
         try {
             console.log('=== CREATE EVENT DEBUG ===');
             console.log('Request body:', req.body);
+            console.log('User from JWT:', req.user);
             
             const { name, description, venue, event_date, total_capacity, price } = req.body;
             
@@ -74,27 +75,36 @@ export class EventController {
                 return;
             }
             
-            // Simple query without created_by and description
+            // Get created_by from JWT token (admin user ID)
+            const created_by = req.user?.userId || null;
+            
+            // Include description and created_by fields
             const query = `
                 INSERT INTO events (
-                    name, venue, event_date, 
-                    total_capacity, available_seats, price
+                    name, description, venue, event_date, 
+                    total_capacity, available_seats, price, created_by
                 )
-                VALUES ($1, $2, $3, $4, $5, $6)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING *
             `;
             
             console.log('SQL Query:', query);
-            console.log('Parameters:', [name, venue, event_date, total_capacity, total_capacity, price]);
+            console.log('Parameters:', [name, description, venue, event_date, total_capacity, total_capacity, price, created_by]);
             
             const result = await db.query(query, [
-                name, venue, event_date, 
-                total_capacity, total_capacity, price
+                name, 
+                description || null,  // Allow null description
+                venue, 
+                event_date, 
+                total_capacity, 
+                total_capacity,  // available_seats = total_capacity initially
+                price,
+                created_by
             ]);
 
             const event = result.rows[0];
             
-            console.log(`✅ Event created: ${event.name} (${event.id})`);
+            console.log(`✅ Event created: ${event.name} (${event.id}) by user: ${created_by}`);
             
             res.status(201).json({
                 success: true,

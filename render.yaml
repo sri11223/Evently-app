@@ -1,7 +1,7 @@
 services:
   - type: web
     name: evently-booking-system
-    env: node
+    runtime: node
     plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
@@ -21,13 +21,12 @@ services:
           type: redis
           name: evently-redis
           property: connectionString
+  - type: redis
+    name: evently-redis
+    plan: free
+    ipAllowList: []
 
 databases:
   - name: evently-database
     databaseName: evently
-    plan: free
-
-services:
-  - type: redis
-    name: evently-redis
     plan: free
