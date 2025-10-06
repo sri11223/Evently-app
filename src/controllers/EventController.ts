@@ -222,12 +222,16 @@ export class EventController {
                 return;
             }
             
+            // Get admin user info from JWT (cast to any to access user property)
+            const deletedBy = (req as any).user?.id || null;
+            const deletedByName = (req as any).user?.name || 'Unknown';
+            
             // Soft delete event
             const result = await db.query(`
                 UPDATE events 
                 SET status = 'cancelled', updated_at = NOW() 
                 WHERE id = $1 
-                RETURNING name
+                RETURNING name, id
             `, [eventId]);
             
             if (result.rows.length === 0) {
@@ -238,9 +242,18 @@ export class EventController {
                 return;
             }
             
+            const event = result.rows[0];
+            
             res.json({
                 success: true,
-                message: `Event "${result.rows.name}" cancelled successfully`
+                message: `Event "${event.name}" cancelled successfully by ${deletedByName}`,
+                data: {
+                    event_id: event.id,
+                    event_name: event.name,
+                    deleted_by_user_id: deletedBy,
+                    deleted_by_name: deletedByName,
+                    status: 'cancelled'
+                }
             });
             
         } catch (error) {
