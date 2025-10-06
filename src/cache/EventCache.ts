@@ -26,6 +26,7 @@ export class EventCacheService {
                         total_capacity, available_seats, price,
                         created_at
                     FROM events 
+                    WHERE status = 'active'
                     ORDER BY event_date ASC
                 `);
                 return result.rows;
@@ -49,7 +50,7 @@ export class EventCacheService {
                         total_capacity, available_seats, price,
                         created_at
                     FROM events 
-                    WHERE id = $1
+                    WHERE id = $1 AND status = 'active'
                 `, [eventId]);
                 
                 return result.rows.length > 0 ? result.rows[0] : null;
@@ -74,6 +75,7 @@ export class EventCacheService {
                         SUM(b.quantity) as total_tickets_sold
                     FROM events e
                     LEFT JOIN bookings b ON e.id = b.event_id
+                    WHERE e.status = 'active'
                     GROUP BY e.id, e.name, e.venue, e.price, e.available_seats
                     ORDER BY booking_count DESC, total_tickets_sold DESC
                     LIMIT $1

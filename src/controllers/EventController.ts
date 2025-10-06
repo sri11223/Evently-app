@@ -104,6 +104,9 @@ export class EventController {
 
             const event = result.rows[0];
             
+            // Clear cache after creating new event
+            await eventCache.invalidateEvent(event.id);
+            
             console.log(`✅ Event created: ${event.name} (${event.id}) by user: ${created_by}`);
             
             res.status(201).json({
@@ -179,6 +182,9 @@ export class EventController {
                 
                 await client.query('COMMIT');
                 
+                // Clear cache after updating event
+                await eventCache.invalidateEvent(eventId);
+                
                 res.json({
                     success: true,
                     data: result.rows,
@@ -243,6 +249,9 @@ export class EventController {
             }
             
             const event = result.rows[0];
+            
+            // Clear cache after deletion (invalidates all event caches)
+            await eventCache.invalidateEvent(eventId);
             
             res.json({
                 success: true,
