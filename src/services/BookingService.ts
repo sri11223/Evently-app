@@ -4,6 +4,7 @@ import { redis } from '../config/redis';
 import { BookingRequest, Event, Booking } from '../types';
 import { randomUUID } from 'crypto';
 import { eventCache } from '../cache/EventCache';
+import { emailService } from './EmailService';
 
 
 export class BookingService {
@@ -40,8 +41,8 @@ public async bookTickets(request: BookingRequest): Promise<any> {
             await client.query('BEGIN');
             console.log('🔒 Transaction started');
 
-            // Validate user exists
-            const userCheck = await client.query('SELECT id FROM users WHERE id = $1', [user_id]);
+            // Validate user exists and get email
+            const userCheck = await client.query('SELECT id, email, name FROM users WHERE id = $1', [user_id]);
             if (userCheck.rows.length === 0) {
                 throw new Error('User not found. Please register or login first.');
             }
@@ -136,6 +137,18 @@ public async bookTickets(request: BookingRequest): Promise<any> {
             console.log('🗑️ Event cache invalidated');
 
             const booking = bookingResult.rows[0];
+
+            // Send confirmation email (non-blocking)
+            emailService.sendBookingConfirmation({
+                to: userCheck.rows[0].email || 'user@example.com',
+                userName: userCheck.rows[0].name || 'Valued Customer',
+                eventName: event.name,
+                eventDate: event.event_date,
+                venue: event.venue,
+                quantity,
+                totalPrice: totalAmount,
+                reference: bookingReference
+            }).catch(err => console.error('📧 Email send failed:', err));
 
             return {
                 success: true,

@@ -3,6 +3,7 @@ import { redis } from '../config/redis';
 import { db } from '../config/database';
 import { EventEmitter } from 'events';
 import { notificationService } from './NotificationService';
+import { emailService } from './EmailService';
 
 
 export interface WaitlistEntry {
@@ -140,6 +141,18 @@ export class WaitlistManager extends EventEmitter {
                 });
     
                 console.log(`📧 Waitlist confirmation sent to user ${userId} for position ${position}`);
+                
+                // Send waitlist confirmation email
+                const userResult = await db.query('SELECT email, name FROM users WHERE id = $1', [userId]);
+                if (userResult.rows[0]) {
+                    emailService.sendWaitlistJoined({
+                        to: userResult.rows[0].email,
+                        userName: userResult.rows[0].name,
+                        eventName,
+                        position,
+                        estimatedWaitTime: estimatedWaitTime ? `${(estimatedWaitTime / 60).toFixed(1)} hours` : 'TBD'
+                    }).catch(err => console.error('📧 Waitlist email failed:', err));
+                }
                 
             } catch (notificationError) {
                 console.error('❌ Waitlist notification error:', notificationError);
@@ -320,6 +333,7 @@ export class WaitlistManager extends EventEmitter {
                         `, [eventId, userId]);
     
                         // 🔔 SEND REAL-TIME NOTIFICATION
+                        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
                         await notificationService.sendNotification({
                             type: 'waitlist_promoted',
                             title: '🎉 Great news! You\'re off the waitlist!',
@@ -330,12 +344,25 @@ export class WaitlistManager extends EventEmitter {
                                 promotionId, 
                                 bookingWindowMinutes: 10,
                                 eventName,
-                                expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString()
+                                expiresAt: expiresAt.toISOString()
                             },
                             channels: ['websocket', 'email', 'push'],
                             priority: 'urgent',
                             timestamp: new Date()
                         });
+    
+                        // Send urgent promotion email
+                        const userResult = await db.query('SELECT email, name FROM users WHERE id = $1', [userId]);
+                        if (userResult.rows[0]) {
+                            emailService.sendWaitlistPromotion({
+                                to: userResult.rows[0].email,
+                                userName: userResult.rows[0].name,
+                                eventName,
+                                eventDate: eventResult.rows[0].event_date,
+                                bookingWindowMinutes: 10,
+                                expiresAt: expiresAt.toISOString()
+                            }).catch(err => console.error('📧 Promotion email failed:', err));
+                        }
     
                         promotedCount++;
                         

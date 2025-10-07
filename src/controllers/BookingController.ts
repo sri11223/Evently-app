@@ -4,6 +4,7 @@ import { bookingService } from '../services/BookingService';
 import { db } from '../config/database';
 import { pool } from '../config/database';
 import { eventCache } from '../cache/EventCache';
+import { emailService } from '../services/EmailService';
 
 export class BookingController {
 
@@ -65,11 +66,12 @@ export class BookingController {
             try {
                 await client.query('BEGIN');
                 
-                // Get booking details
+                // Get booking details with user info
                 const bookingQuery = `
-                    SELECT b.*, e.name as event_name, e.event_date 
+                    SELECT b.*, e.name as event_name, e.event_date, u.email, u.name as user_name
                     FROM bookings b 
                     JOIN events e ON b.event_id = e.id 
+                    JOIN users u ON b.user_id = u.id
                     WHERE b.id = $1 AND b.status = 'confirmed'
                     FOR UPDATE
                 `;
@@ -121,6 +123,16 @@ export class BookingController {
                 await eventCache.invalidateEvent(booking.event_id);
                 
                 console.log(`✅ Booking cancelled: ${bookingId}, ${booking.quantity} seats returned`);
+                
+                // Send cancellation email (non-blocking)
+                emailService.sendBookingCancellation({
+                    to: booking.email,
+                    userName: booking.user_name,
+                    eventName: booking.event_name,
+                    quantity: booking.quantity,
+                    refundAmount: booking.total_amount,
+                    reference: booking.booking_reference
+                }).catch(err => console.error('📧 Cancellation email failed:', err));
                 
                 // 🎯 TRIGGER WAITLIST PROMOTION - Auto-promote users when seats become available
                 try {

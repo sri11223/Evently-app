@@ -3,6 +3,7 @@ import { Server as SocketServer } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { EventEmitter } from 'events';
 import { redis } from '../config/redis';
+import { emailService } from './EmailService';
 
 // Update the NotificationPayload interface at the top of the file
 export interface NotificationPayload {
@@ -305,11 +306,36 @@ export class NotificationService extends EventEmitter {
     }
 
     private async sendEmailNotification(notification: NotificationPayload): Promise<boolean> {
-        // Simulate email sending (in production, integrate with SendGrid, AWS SES, etc.)
-        await new Promise(resolve => setTimeout(resolve, 50)); // Simulate API call
-        
-        console.log(`📧 Email sent to user ${notification.userId}: ${notification.title}`);
-        return Math.random() > 0.1; // 90% success rate simulation
+        try {
+            // Get user details for email
+            const { db } = await import('../config/database');
+            const userResult = await db.query('SELECT email, name FROM users WHERE id = $1', [notification.userId]);
+            
+            if (!userResult.rows[0]) {
+                console.error(`User ${notification.userId} not found for email notification`);
+                return false;
+            }
+
+            const user = userResult.rows[0];
+            
+            // Send email using EmailService
+            const success = await emailService.sendNotification({
+                to: user.email,
+                userName: user.name,
+                title: notification.title,
+                message: notification.message,
+                type: notification.type
+            });
+            
+            if (success) {
+                console.log(`📧 Email sent to ${user.email}: ${notification.title}`);
+            }
+            
+            return success;
+        } catch (error) {
+            console.error('Email notification error:', error);
+            return false;
+        }
     }
 
     private async sendPushNotification(notification: NotificationPayload): Promise<boolean> {

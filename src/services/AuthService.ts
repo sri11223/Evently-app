@@ -112,6 +112,74 @@ export class AuthService {
             
             console.log(`✅ New user registered: ${user.email} (${user.role})`);
             
+            // Send welcome email (non-blocking)
+            try {
+                const { emailService } = await import('./EmailService');
+                emailService.sendEmail({
+                    to: user.email,
+                    subject: '🎉 Welcome to Evently!',
+                    html: `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <style>
+                                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; border-radius: 10px 10px 0 0; }
+                                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                                .button { display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                                .features { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                                .feature-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+                                .footer { text-align: center; color: #999; padding: 20px; font-size: 12px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">
+                                    <h1>🎉 Welcome to Evently!</h1>
+                                    <p>Your account has been created successfully</p>
+                                </div>
+                                <div class="content">
+                                    <p>Hi <strong>${user.name}</strong>,</p>
+                                    <p>Thank you for joining Evently! We're excited to have you on board.</p>
+                                    
+                                    <div class="features">
+                                        <h3>What you can do:</h3>
+                                        <div class="feature-item">🎫 <strong>Book Events</strong> - Browse and book tickets instantly</div>
+                                        <div class="feature-item">⏳ <strong>Join Waitlists</strong> - Get notified when spots open up</div>
+                                        <div class="feature-item">🔔 <strong>Real-time Notifications</strong> - Stay updated via email & push</div>
+                                        <div class="feature-item">📊 <strong>Manage Bookings</strong> - View and cancel bookings anytime</div>
+                                    </div>
+
+                                    <p><strong>Your Account Details:</strong></p>
+                                    <ul>
+                                        <li>Email: ${user.email}</li>
+                                        <li>Role: ${user.role}</li>
+                                        <li>Account Status: Active ✅</li>
+                                    </ul>
+
+                                    <center>
+                                        <a href="https://evently-app-7hx2.onrender.com" class="button">Start Booking Events</a>
+                                    </center>
+
+                                    <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                                        <strong>💡 Pro Tip:</strong> Enable notifications to get instant alerts when you're promoted from waitlists!
+                                    </p>
+                                </div>
+                                <div class="footer">
+                                    <p>© 2025 Evently - Event Booking System</p>
+                                    <p>Need help? Contact support@evently.com</p>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `
+                }).catch(err => console.error('📧 Welcome email failed:', err));
+            } catch (error) {
+                // Don't fail registration if email fails
+                console.error('Welcome email error:', error);
+            }
+            
             return {
                 success: true,
                 user: {
