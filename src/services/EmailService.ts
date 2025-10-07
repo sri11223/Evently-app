@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 export interface EmailConfig {
   host: string;
@@ -18,31 +19,37 @@ export interface EmailOptions {
 
 /**
  * EmailService - Production-ready email notifications
- * Uses Gmail SMTP for reliable delivery
+ * Uses SendGrid Web API for production, SMTP for development
  * Integrated with: Bookings, Waitlist, Notifications
  */
 export class EmailService {
   private transporter!: nodemailer.Transporter;
   private config: EmailConfig;
   private isConfigured: boolean;
+  private useSendGridAPI: boolean;
 
   constructor() {
-    // Support both Gmail and SendGrid
-    const isSendGrid = process.env.SENDGRID_API_KEY;
+    // Prefer SendGrid Web API for production, SMTP for development
+    const sendGridApiKey = process.env.SENDGRID_API_KEY;
+    this.useSendGridAPI = !!(sendGridApiKey && process.env.NODE_ENV === 'production');
     
     this.config = {
       host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
       port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-      user: process.env.SMTP_USER || 'apikey', // SendGrid uses 'apikey' as username
-      password: process.env.SMTP_PASSWORD || process.env.SENDGRID_API_KEY || '', // Gmail App Password or SendGrid API Key
+      secure: process.env.SMTP_SECURE === 'true',
+      user: process.env.SMTP_USER || 'apikey',
+      password: process.env.SMTP_PASSWORD || process.env.SENDGRID_API_KEY || '',
       from: process.env.SMTP_FROM || 'Evently <noreply@evently.com>'
     };
 
-    // Check if email is properly configured
-    this.isConfigured = !!(this.config.user && this.config.password);
-
-    if (this.isConfigured) {
+    // Initialize SendGrid Web API if in production
+    if (this.useSendGridAPI && sendGridApiKey) {
+      sgMail.setApiKey(sendGridApiKey);
+      console.log('✅ EmailService initialized with SendGrid Web API (production)');
+      this.isConfigured = true;
+    } 
+    // Otherwise use SMTP for development
+    else if (this.config.user && this.config.password) {
       this.transporter = nodemailer.createTransport({
         host: this.config.host,
         port: this.config.port,
@@ -51,27 +58,26 @@ export class EmailService {
           user: this.config.user,
           pass: this.config.password,
         },
-        // Timeout settings for production reliability
-        connectionTimeout: 60000, // 60 seconds
-        greetingTimeout: 30000,   // 30 seconds  
-        socketTimeout: 60000,     // 60 seconds
-        // Connection pool settings
+        connectionTimeout: 60000,
+        greetingTimeout: 30000,
+        socketTimeout: 60000,
         pool: true,
         maxConnections: 5,
         maxMessages: 100,
-        // Retry settings
         rateDelta: 20000,
         rateLimit: 5
       });
-      const provider = isSendGrid ? 'SendGrid' : 'Gmail SMTP';
-      console.log(`✅ EmailService initialized with ${provider} configuration`);
+      console.log('✅ EmailService initialized with SendGrid SMTP (development)');
+      this.isConfigured = true;
     } else {
-      console.warn('⚠️  EmailService: SMTP credentials not configured. Email notifications disabled.');
+      console.warn('⚠️  EmailService: No email configuration found. Email notifications disabled.');
+      this.isConfigured = false;
     }
   }
 
   /**
    * Send email with automatic retry and error handling
+   * Uses SendGrid Web API in production, SMTP in development
    */
   async sendEmail(options: EmailOptions): Promise<boolean> {
     if (!this.isConfigured) {
@@ -80,21 +86,43 @@ export class EmailService {
     }
 
     try {
-      const mailOptions = {
-        from: this.config.from,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || this.stripHtml(options.html)
-      };
+      // Use SendGrid Web API in production (bypasses network restrictions)
+      if (this.useSendGridAPI) {
+        const msg = {
+          to: options.to,
+          from: this.config.from,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || this.stripHtml(options.html)
+        };
 
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email sent successfully:', {
-        to: options.to,
-        subject: options.subject,
-        messageId: info.messageId
-      });
-      return true;
+        const [response] = await sgMail.send(msg);
+        console.log('✅ Email sent via SendGrid Web API:', {
+          to: options.to,
+          subject: options.subject,
+          statusCode: response.statusCode,
+          messageId: response.headers['x-message-id']
+        });
+        return true;
+      } 
+      // Use SMTP for development
+      else {
+        const mailOptions = {
+          from: this.config.from,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || this.stripHtml(options.html)
+        };
+
+        const info = await this.transporter.sendMail(mailOptions);
+        console.log('✅ Email sent via SMTP:', {
+          to: options.to,
+          subject: options.subject,
+          messageId: info.messageId
+        });
+        return true;
+      }
     } catch (error) {
       console.error('❌ Email sending failed:', error);
       return false;

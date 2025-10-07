@@ -1,6 +1,7 @@
 // Debug route for checking email configuration on Render
 import { Request, Response } from 'express';
 import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 export class EmailDebugController {
     /**
@@ -21,31 +22,43 @@ export class EmailDebugController {
                 SMTP_FROM: process.env.SMTP_FROM || '❌ Missing'
             };
 
-            // Test SendGrid configuration
-            const config = {
-                host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
-                port: parseInt(process.env.SMTP_PORT || '587'),
-                secure: process.env.SMTP_SECURE === 'true',
-                user: process.env.SMTP_USER || 'apikey',
-                password: process.env.SMTP_PASSWORD || process.env.SENDGRID_API_KEY || '',
-                from: process.env.SMTP_FROM || 'Evently <noreply@evently.com>'
-            };
+            const useSendGridAPI = !!(process.env.SENDGRID_API_KEY && process.env.NODE_ENV === 'production');
+            let webApiTest = '❌ Not tested';
+            let smtpTest = '❌ Not tested';
 
-            const configCheck = {
-                host: config.host,
-                port: config.port,
-                secure: config.secure,
-                user: config.user,
-                password: config.password ? '✅ Set' : '❌ Missing',
-                from: config.from
-            };
-
-            let connectionTest = '❌ Not tested';
-            let emailTest = '❌ Not tested';
-
-            // Test connection if API key is available
-            if (config.password) {
+            // Test SendGrid Web API
+            if (process.env.SENDGRID_API_KEY) {
                 try {
+                    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+                    
+                    const msg = {
+                        to: 'nutalapatisrikrishna85@gmail.com',
+                        from: process.env.SMTP_FROM || 'Evently <noreply@evently.com>',
+                        subject: '🧪 Render Debug - SendGrid Web API Test',
+                        html: '<h2>✅ SendGrid Web API is working on Render!</h2><p>This email was sent using SendGrid Web API.</p>'
+                    };
+
+                    const [response] = await sgMail.send(msg);
+                    webApiTest = `✅ Success (Status: ${response.statusCode})`;
+
+                } catch (error: any) {
+                    webApiTest = `❌ Failed: ${error.message}`;
+                }
+            } else {
+                webApiTest = '❌ No API key configured';
+            }
+
+            // Test SMTP (only if not using Web API)
+            if (!useSendGridAPI && process.env.SMTP_PASSWORD) {
+                try {
+                    const config = {
+                        host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
+                        port: parseInt(process.env.SMTP_PORT || '587'),
+                        secure: process.env.SMTP_SECURE === 'true',
+                        user: process.env.SMTP_USER || 'apikey',
+                        password: process.env.SMTP_PASSWORD,
+                    };
+
                     const transporter = nodemailer.createTransport({
                         host: config.host,
                         port: config.port,
@@ -57,26 +70,13 @@ export class EmailDebugController {
                         connectionTimeout: 60000,
                         greetingTimeout: 30000,
                         socketTimeout: 60000,
-                        pool: true,
-                        maxConnections: 5
                     });
 
                     await transporter.verify();
-                    connectionTest = '✅ Success';
-
-                    // Try sending a test email
-                    const info = await transporter.sendMail({
-                        from: config.from,
-                        to: 'nutalapatisrikrishna85@gmail.com',
-                        subject: '🧪 Render Debug Test - SendGrid',
-                        html: '<h2>✅ SendGrid is working on Render!</h2><p>This email was sent from the debug route.</p>'
-                    });
-
-                    emailTest = `✅ Sent (ID: ${info.messageId})`;
+                    smtpTest = '✅ Connection verified';
 
                 } catch (error: any) {
-                    connectionTest = `❌ Failed: ${error.message}`;
-                    emailTest = `❌ Failed: ${error.message}`;
+                    smtpTest = `❌ Failed: ${error.message}`;
                 }
             }
 
@@ -86,10 +86,13 @@ export class EmailDebugController {
                 data: {
                     timestamp: new Date().toISOString(),
                     environment: process.env.NODE_ENV,
+                    methodUsed: useSendGridAPI ? 'SendGrid Web API' : 'SMTP',
                     environmentVariables: envCheck,
-                    configuration: configCheck,
-                    connectionTest,
-                    emailTest
+                    sendGridWebApiTest: webApiTest,
+                    smtpTest: smtpTest,
+                    recommendation: useSendGridAPI ? 
+                        'Using SendGrid Web API (recommended for production)' : 
+                        'Using SMTP (recommended for development)'
                 }
             });
 
