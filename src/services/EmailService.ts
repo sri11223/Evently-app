@@ -51,6 +51,17 @@ export class EmailService {
           user: this.config.user,
           pass: this.config.password,
         },
+        // Timeout settings for production reliability
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 30000,   // 30 seconds  
+        socketTimeout: 60000,     // 60 seconds
+        // Connection pool settings
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        // Retry settings
+        rateDelta: 20000,
+        rateLimit: 5
       });
       const provider = isSendGrid ? 'SendGrid' : 'Gmail SMTP';
       console.log(`✅ EmailService initialized with ${provider} configuration`);
