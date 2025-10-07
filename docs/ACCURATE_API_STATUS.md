@@ -228,31 +228,6 @@ Authorization: Bearer ADMIN_TOKEN
 **Status:** 🔴 **25% Working** (1/4 endpoints)
 **Note:** User features work, admin features have middleware issues
 
----
-
-### **💰 7. DYNAMIC PRICING - ❌ NOT WORKING (0% Working)**
-
-#### **❌ Documentation Mismatch:**
-```http
-# ❌ DOCUMENTED ENDPOINTS DON'T EXIST (404 errors)
-GET https://evently-app-7hx2.onrender.com/api/v1/pricing/dynamic/:eventId    # 404
-GET https://evently-app-7hx2.onrender.com/api/v1/pricing/bulk?quantity=10   # 404  
-GET https://evently-app-7hx2.onrender.com/api/v1/pricing/demand/:eventId    # 404
-GET https://evently-app-7hx2.onrender.com/api/v1/pricing/analytics          # 404
-```
-
-#### **⚠️ Actual Implementation (Not Working):**
-```http
-# ⚠️ ACTUAL ENDPOINTS HAVE ISSUES
-GET https://evently-app-7hx2.onrender.com/api/v1/pricing/event/:eventId           # 500 Error
-GET https://evently-app-7hx2.onrender.com/api/v1/pricing/recommendations         # 403 Error
-POST https://evently-app-7hx2.onrender.com/api/v1/pricing/event/:eventId/apply   # 403 Error
-```
-
-**Status:** 🔴 **0% Working** - Complete documentation mismatch
-**Note:** ❌ Sophisticated code exists but has database replica and middleware issues
-
----
 
 ### **⚡ 8. CACHING SYSTEM - ✅ EXCELLENT (100% Working)**
 

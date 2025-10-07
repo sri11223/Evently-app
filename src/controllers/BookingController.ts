@@ -122,12 +122,29 @@ export class BookingController {
                 
                 console.log(`✅ Booking cancelled: ${bookingId}, ${booking.quantity} seats returned`);
                 
+                // 🎯 TRIGGER WAITLIST PROMOTION - Auto-promote users when seats become available
+                try {
+                    const { waitlistManager } = await import('../services/WaitlistManager');
+                    const promotedCount = await waitlistManager.processWaitlistPromotions(
+                        booking.event_id, 
+                        booking.quantity
+                    );
+                    
+                    if (promotedCount > 0) {
+                        console.log(`🎉 ${promotedCount} users promoted from waitlist for event ${booking.event_id}`);
+                    }
+                } catch (waitlistError) {
+                    console.error('⚠️ Waitlist promotion failed (non-critical):', waitlistError);
+                    // Don't fail the cancellation if waitlist processing fails
+                }
+                
                 res.json({
                     success: true,
                     message: 'Booking cancelled successfully',
                     booking_reference: booking.booking_reference,
                     refunded_amount: booking.total_amount,
-                    seats_returned: booking.quantity
+                    seats_returned: booking.quantity,
+                    waitlist_processed: true
                 });
                 
             } catch (error) {
