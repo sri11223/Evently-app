@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { waitlistController } from '../controllers/WaitlistController';
 import { apiRateLimit } from '../middleware/RateLimitMiddleware';
-import { authenticateRequired, requireAdmin } from '../middleware/AuthMiddleware';
+import { authenticateRequired, requireAdminAuth } from '../middleware/AuthMiddleware';
 
 const router = Router();
 
@@ -19,9 +19,9 @@ router.delete('/:eventId/user/:userId', authenticateRequired, waitlistController
 router.get('/:eventId/user/:userId', authenticateRequired, waitlistController.getWaitlistPosition.bind(waitlistController));
 
 // GET /api/v1/waitlist/:eventId/stats - Get waitlist stats (admin only)
-router.get('/:eventId/stats', requireAdmin, waitlistController.getWaitlistStats.bind(waitlistController));
+router.get('/:eventId/stats', requireAdminAuth, waitlistController.getWaitlistStats.bind(waitlistController));
 
 // POST /api/v1/waitlist/:eventId/process - Admin: Process waitlist (admin only)
-router.post('/:eventId/process', requireAdmin, waitlistController.processWaitlist.bind(waitlistController));
+router.post('/:eventId/process', requireAdminAuth, waitlistController.processWaitlist.bind(waitlistController));
 
 export default router;

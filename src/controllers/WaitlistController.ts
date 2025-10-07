@@ -98,10 +98,10 @@ export class WaitlistController {
             const query = `
                 SELECT 
                     COUNT(*) as total_waitlisted,
-                    MIN(created_at) as oldest_entry,
-                    MAX(created_at) as newest_entry
-                FROM waitlist 
-                WHERE event_id = $1 AND status = 'waiting'
+                    MIN(joined_at) as oldest_entry,
+                    MAX(joined_at) as newest_entry
+                FROM waitlists 
+                WHERE event_id = $1 AND status = 'active'
             `;
 
             const result = await db.query(query, [eventId]);
