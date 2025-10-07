@@ -27,12 +27,15 @@ export class EmailService {
   private isConfigured: boolean;
 
   constructor() {
+    // Support both Gmail and SendGrid
+    const isSendGrid = process.env.SENDGRID_API_KEY;
+    
     this.config = {
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-      user: process.env.SMTP_USER || '',
-      password: process.env.SMTP_PASSWORD || '', // Gmail App Password
+      user: process.env.SMTP_USER || 'apikey', // SendGrid uses 'apikey' as username
+      password: process.env.SMTP_PASSWORD || process.env.SENDGRID_API_KEY || '', // Gmail App Password or SendGrid API Key
       from: process.env.SMTP_FROM || 'Evently <noreply@evently.com>'
     };
 
@@ -49,7 +52,8 @@ export class EmailService {
           pass: this.config.password,
         },
       });
-      console.log('✅ EmailService initialized with SMTP configuration');
+      const provider = isSendGrid ? 'SendGrid' : 'Gmail SMTP';
+      console.log(`✅ EmailService initialized with ${provider} configuration`);
     } else {
       console.warn('⚠️  EmailService: SMTP credentials not configured. Email notifications disabled.');
     }
