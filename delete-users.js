@@ -22,10 +22,10 @@ async function deleteUsers() {
 
         // Delete specific emails (update these as needed)
         const emailsToDelete = [
-            'testuser@example.com',
-            'codexclubiot@gmail.com',
-            'srikrishnanutalapati@gmail.com',
-            'srisarhya@gmail.com'
+            'testexmapleuser@gmail.com',
+            'srisarhya@gmail.com', 
+            'srirkishnanutalapati@gmail.com',
+            'srirkishna@gmail.com'
             // Add more emails here as needed
         ];
 

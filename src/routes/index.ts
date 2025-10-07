@@ -14,6 +14,7 @@ import enterpriseRoutes from './enterprise';
 import databaseTestRoutes from './database-test';
 import databaseInitRoutes from './database-init';
 import emailTestRoutes from './email-test';
+import debugRoutes from './debug';
 
 
 const router = Router();
@@ -33,6 +34,7 @@ router.use('/enterprise', enterpriseRoutes);
 router.use('/db-test', databaseTestRoutes);
 router.use('/database', databaseInitRoutes);
 router.use('/email', emailTestRoutes);
+router.use('/debug', debugRoutes); // Debug route for troubleshooting
 
 
 
