@@ -21,6 +21,21 @@ services:
           type: redis
           name: evently-redis
           property: connectionString
+      # SendGrid Email Configuration
+      - key: SENDGRID_API_KEY
+        value: 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
+      - key: SMTP_HOST
+        value: smtp.sendgrid.net
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        value: apikey
+      - key: SMTP_PASSWORD
+        value: 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
+      - key: SMTP_FROM
+        value: Evently <nutalapatisrikrishna85@gmail.com>
   - type: redis
     name: evently-redis
     plan: free
