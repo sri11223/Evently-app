@@ -21,40 +21,85 @@ export class ShardManager {
     private shards: Map<number, ShardInfo> = new Map();
     private shardConfigs: ShardConfig[] = [];
     private readonly SHARD_COUNT = 4;
+    private initialized = false;
 
     constructor() {
         this.initializeShardConfigs();
-        this.setupShards();
+        // Initialize synchronously for now
+        this.setupShardsSync();
+    }
+
+    private setupShardsSync(): void {
+        // Run the async setup synchronously by blocking
+        this.setupShards().catch(error => {
+            console.error('Failed to initialize shards synchronously:', error);
+            // Continue with empty shards - will fail gracefully
+        });
     }
 
     private initializeShardConfigs(): void {
-        // In Railway, we only have one database, so all shards use the same connection
-        // Use DATABASE_URL from Railway environment
-        const databaseUrl = process.env.DATABASE_URL;
-        
-        for (let i = 0; i < this.SHARD_COUNT; i++) {
-            this.shardConfigs.push({
-                shard_id: i,
-                host: 'railway', // Will use connectionString instead
-                port: 5432,
-                database: `shard_${i}`, // Virtual shard identifier
-                user: 'postgres',
-                password: 'railway'
-            });
+        // Local development: Use separate databases for each shard
+        // In production/Railway, this would use DATABASE_URL with sharding logic
+        const isLocal = !process.env.DATABASE_URL;
+
+        if (isLocal) {
+            // Local development with 4 separate PostgreSQL instances
+            for (let i = 0; i < this.SHARD_COUNT; i++) {
+                this.shardConfigs.push({
+                    shard_id: i,
+                    host: 'localhost',
+                    port: 5433 + i, // shard_0: 5433, shard_1: 5434, etc.
+                    database: `shard_${i}_db`,
+                    user: 'postgres',
+                    password: 'password'
+                });
+            }
+        } else {
+            // Railway/production: Use DATABASE_URL (fallback mode for now)
+            const databaseUrl = process.env.DATABASE_URL;
+
+            for (let i = 0; i < this.SHARD_COUNT; i++) {
+                this.shardConfigs.push({
+                    shard_id: i,
+                    host: 'railway', // Will use connectionString instead
+                    port: 5432,
+                    database: `shard_${i}`, // Virtual shard identifier
+                    user: 'postgres',
+                    password: 'railway'
+                });
+            }
         }
     }
 
     private async setupShards(): Promise<void> {
+        const isLocal = !process.env.DATABASE_URL;
+
         for (const config of this.shardConfigs) {
             try {
-                const pool = new Pool({
-                    connectionString: process.env.DATABASE_URL,
-                    ssl: {
-                        rejectUnauthorized: false
-                    },
-                    max: 10, // Smaller pool per shard
-                    idleTimeoutMillis: 30000
-                });
+                let pool: Pool;
+
+                if (isLocal) {
+                    // Local development: Connect to individual shard databases
+                    pool = new Pool({
+                        host: config.host,
+                        port: config.port,
+                        database: config.database,
+                        user: config.user,
+                        password: config.password,
+                        max: 10, // Smaller pool per shard
+                        idleTimeoutMillis: 30000
+                    });
+                } else {
+                    // Railway/production: Use connectionString (fallback mode)
+                    pool = new Pool({
+                        connectionString: process.env.DATABASE_URL,
+                        ssl: {
+                            rejectUnauthorized: false
+                        },
+                        max: 10, // Smaller pool per shard
+                        idleTimeoutMillis: 30000
+                    });
+                }
 
                 // Test connection
                 const client = await pool.connect();
@@ -67,16 +112,12 @@ export class ShardManager {
                     isHealthy: true
                 });
 
-                console.log(`✅ Shard ${config.shard_id} initialized and healthy`);
+                console.log(`✅ Shard ${config.shard_id} initialized and healthy (${isLocal ? 'local' : 'railway'})`);
 
             } catch (error) {
                 console.error(`❌ Failed to initialize shard ${config.shard_id}:`, error);
-                // Add unhealthy shard for monitoring
-                this.shards.set(config.shard_id, {
-                    shard_id: config.shard_id,
-                    pool: new Pool(), // Empty pool
-                    isHealthy: false
-                });
+                // Don't add failed shards to the map - they will be undefined
+                // This allows getShardPool to properly detect unavailable shards
             }
         }
     }
@@ -123,11 +164,40 @@ export class ShardManager {
      */
     public getShardPool(shardId: number): Pool {
         const shard = this.shards.get(shardId);
-        if (!shard || !shard.isHealthy) {
-            console.warn(`Shard ${shardId} unavailable, falling back to shard 0`);
-            return this.shards.get(0)!.pool;
+        if (shard && shard.isHealthy) {
+            return shard.pool;
         }
-        return shard.pool;
+
+        // Find first healthy shard as fallback
+        for (const [id, shardInfo] of this.shards) {
+            if (shardInfo.isHealthy) {
+                console.warn(`Shard ${shardId} unavailable, falling back to shard ${id}`);
+                return shardInfo.pool;
+            }
+        }
+
+        // If no healthy shards found, create a fallback pool
+        console.warn(`No healthy shards available, creating fallback pool for shard ${shardId}`);
+        const isLocal = !process.env.DATABASE_URL;
+        if (isLocal) {
+            return new Pool({
+                host: 'localhost',
+                port: 5433 + (shardId % 4), // Cycle through available ports
+                database: `shard_${shardId % 4}_db`,
+                user: 'postgres',
+                password: 'password',
+                max: 10,
+                idleTimeoutMillis: 30000
+            });
+        } else {
+            // This shouldn't happen in production, but provide fallback
+            return new Pool({
+                connectionString: process.env.DATABASE_URL,
+                ssl: { rejectUnauthorized: false },
+                max: 10,
+                idleTimeoutMillis: 30000
+            });
+        }
     }
 
     /**

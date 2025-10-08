@@ -91,6 +91,46 @@
                            │  promotion_reason             │
                            │  created_at TIMESTAMP         │
                            └─────────────────────────────────┘
+
+                           ┌─────────────────────────────────┐
+                           │         EMAIL_TEMPLATES         │
+                           │─────────────────────────────────│
+                           │  id (UUID) PK                 │
+                           │  template_type ENUM           │
+                           │  │ (welcome, booking_confirm,  │
+                           │  │  cancellation, waitlist_    │
+                           │  │  join, waitlist_promotion,  │
+                           │  │  notification)              │
+                           │  subject_template TEXT        │
+                           │  html_template TEXT           │
+                           │  text_template TEXT           │
+                           │  variables JSON               │
+                           │  │ {userName, eventName,       │
+                           │  │  eventDate, venue, etc.}    │
+                           │  is_active BOOLEAN            │
+                           │  version INTEGER              │
+                           │  created_at TIMESTAMP         │
+                           │  updated_at TIMESTAMP         │
+                           └─────────────────────────────────┘
+
+                           ┌─────────────────────────────────┐
+                           │        EMAIL_DELIVERY_LOG       │
+                           │─────────────────────────────────│
+                           │  id (UUID) PK                 │
+                           │  recipient_email VARCHAR       │
+                           │  template_type ENUM           │
+                           │  provider ENUM(sendgrid,smtp) │
+                           │  status ENUM(sent,failed,     │
+                           │         pending,bounced)      │
+                           │  send_attempts INTEGER        │
+                           │  last_attempt_at TIMESTAMP    │
+                           │  delivered_at TIMESTAMP       │
+                           │  error_message TEXT           │
+                           │  metadata JSON                │
+                           │  │ {messageId, reference,      │
+                           │  │  eventId, userId}           │
+                           │  created_at TIMESTAMP         │
+                           └─────────────────────────────────┘
 ```
 
 ## 🔗 Advanced Relationship Matrix

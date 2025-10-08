@@ -1,21 +1,78 @@
 # docker-compose.yml
 services:
-  # PostgreSQL Database
-  postgres:
+  # PostgreSQL Shards (4 shards for horizontal scaling)
+  shard_0:
     image: postgres:15-alpine
-    container_name: evently_postgres
+    container_name: evently_shard_0
     environment:
-      POSTGRES_DB: evently_db
+      POSTGRES_DB: shard_0_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5433:5432"  # Changed from 5432 to 5433
+      - "5433:5432"  # Shard 0 on port 5433
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - shard_0_data:/var/lib/postgresql/data
       - ./src/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d evently_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shard_0_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shard_1:
+    image: postgres:15-alpine
+    container_name: evently_shard_1
+    environment:
+      POSTGRES_DB: shard_1_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5434:5432"  # Shard 1 on port 5434
+    volumes:
+      - shard_1_data:/var/lib/postgresql/data
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shard_1_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shard_2:
+    image: postgres:15-alpine
+    container_name: evently_shard_2
+    environment:
+      POSTGRES_DB: shard_2_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5435:5432"  # Shard 2 on port 5435
+    volumes:
+      - shard_2_data:/var/lib/postgresql/data
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shard_2_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shard_3:
+    image: postgres:15-alpine
+    container_name: evently_shard_3
+    environment:
+      POSTGRES_DB: shard_3_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5436:5432"  # Shard 3 on port 5436
+    volumes:
+      - shard_3_data:/var/lib/postgresql/data
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shard_3_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,12 +116,21 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - postgres
+      - shard_0
+      - shard_1
+      - shard_2
+      - shard_3
     profiles:
       - gui
 
 volumes:
-  postgres_data:
+  shard_0_data:
+    driver: local
+  shard_1_data:
+    driver: local
+  shard_2_data:
+    driver: local
+  shard_3_data:
     driver: local
   redis_data:
     driver: local

@@ -1,4 +1,13 @@
-# 🏗️ Evently Backend - Complete System Architecture
+# 🏗️ Evently Backend - Complete Sys┌─────────────────┐ │  ┌─────────────────────────────────────────┐    │ ┌─────────────────┐
+│   Email System  │ │  │           CORE CONTROLLERS              │    │ │   Background    │
+│                 │◄┼──┤                                         │    ├─┤   Job Queue     │
+│• SendGrid API   │ │  │ ┌─────┐┌─────┐┌─────┐┌─────┐┌─────────┐ │    │ │                 │
+│• SMTP Fallback  │ │  │ │Event││Book.││Wait.││Anal.││Pricing  │ │    │ │• Event Remind.  │
+│• 6 Templates    │ │  │ │Ctrl ││Ctrl ││Ctrl ││Ctrl ││Ctrl     │ │    │ │• Email Queue    │
+│• Multi-provider │ │  │ └─────┘└─────┘└─────┘└─────┘└─────────┘ │    │ │• Waitlist Proc. │
+│• HTML + Text    │ │  └─────────────────────────────────────────┘    │ │• Analytics Comp.│
+│• Non-blocking   │ │                                                 │ │• Lock Cleanup   │
+└─────────────────┘ └─────────────────┬───────────────────────────────┘ └─────────────────┘tecture
 
 ## 🌐 High-Level System Overview
 
@@ -74,9 +83,10 @@
                     │ ┌─────────────────────────────────────────────┐ │
                     │ │              L2: REDIS CLUSTER              │ │
                     │ │            (Distributed Cache)              │ │
-                    │ │ • Event Lists      • Booking Locks         │ │
-                    │ │ • User Data        • Session Storage       │ │
+                    │ │ • Event Lists      • Distributed Locks     │ │
+                    │ │ • User Sessions    • Booking Locks         │ │
                     │ │ • Waitlist Queue   • Job Queue            │ │
+                    │ │ • Rate Limits      • Real-time Metrics    │ │
                     │ │ • TTL: 5min-1hr   • Size: ~10GB           │ │
                     │ └─────────────────────────────────────────────┘ │
                     │ ┌─────────────────────────────────────────────┐ │
@@ -163,40 +173,50 @@
    └── Client Response
 ```
 
-### 🎫 Booking Flow (Zero Overselling)
+### 🎫 Booking Flow (Zero Overselling) - THREE-LAYER CONCURRENCY PROTECTION
 ```
 1. Booking Request
    ↓
 2. Input Validation
    ↓
-3. Redis Distributed Lock
-   └── Key: booking_lock:{event_id}
+3. 🔒 LAYER 1: Redis Distributed Lock
+   └── Key: booking_lock:{user_id}:{event_id}  ← USER+EVENT SPECIFIC
+   └── Value: timestamp for safe unlock
    └── TTL: 30 seconds
+   └── Atomic: SET key value PX 30000 NX
    ↓
 4. Database Transaction Begin
    ↓
-5. Event Row Lock (FOR UPDATE)
+5. 🔒 LAYER 2: PostgreSQL Row Lock (FOR UPDATE)
+   └── SELECT ... FROM events WHERE id = $1 FOR UPDATE
+   └── Prevents concurrent event modifications
    ↓
-6. Availability Check
+6. Availability Check + Duplicate Prevention
    └── available_seats >= requested_quantity
+   └── Check existing confirmed bookings for same user
    ↓
-7. Optimistic Locking Check
-   └── version = expected_version
+7. 🔒 LAYER 3: Optimistic Locking Check
+   └── UPDATE events SET version = version + 1 WHERE version = $expected
+   └── Prevents lost update problem
    ↓
 8. Create Booking Record
+   └── INSERT booking with CONFIRMED status
    ↓
 9. Update Event Capacity
    └── available_seats -= quantity
-   └── version += 1
+   └── version += 1 (atomic increment)
    ↓
 10. Transaction Commit
     ↓
-11. Release Redis Lock
+11. 🔓 Safe Lock Release (Lua Script)
+    └── if redis.call("get", key) == value then del key
+    └── Prevents accidental unlock by expired requests
     ↓
-12. Send Notifications
-    ├── WebSocket Update
-    ├── Email Confirmation
-    └── Waitlist Processing
+12. 📧 Multi-Channel Notifications (Non-blocking)
+    ├── WebSocket Real-time Update
+    ├── Email Confirmation (SendGrid API/SMTP)
+    ├── Cache Invalidation (Event data)
+    └── Waitlist Auto-processing
 ```
 
 ### 📊 Analytics Processing Flow
